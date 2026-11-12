@@ -272,7 +272,7 @@ dialog.tour .field { margin: .4rem 0; flex: 1 1 10rem; }
 .choice { display: flex; align-items: center; gap: .4rem; min-height: 44px; }
 .choice input { width: 1.3rem; height: 1.3rem; flex: none; }
 .backuphelp { padding-left: 1.2rem; }
-.importbox select { max-width: 100%; }
+.importbox select, .importbox input[type=file] { max-width: 100%; }
 
 /* Hold-to-explain tips on the child's Home (kidopts.js) and the grown-up buttons during a dictation. */
 .holdtip { position: absolute; z-index: 50; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 10px;

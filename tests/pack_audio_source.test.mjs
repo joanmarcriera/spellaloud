@@ -39,3 +39,13 @@ test('store import + export round trip keeps tts vs child', async () => {
   const back = (await store.snapshot()).snapshot.weeks[0].words;
   assert.deepEqual(back.map((w) => w.audio_source), ['tts', undefined]);
 });
+
+test('merge into an empty bookmark-made child takes the file child\'s year and settings', () => {
+  const here = { kids: [{ slug: 'ash', name: 'Ash', year: 2, settings: {} }], weeks: [], sessions: [] };
+  const file = snap(); file.kids[0].settings = { speed: 'slow' };
+  const { snapshot } = mergePack(here, {}, file, audio);
+  assert.deepEqual(snapshot.kids, [{ slug: 'ash', name: 'Ash', year: 1, settings: { speed: 'slow' } }]);
+  // a child with words here keeps its own record
+  const busy = { ...structuredClone(here), weeks: [{ kid: 'ash', week_start: '2026-10-05', words: [{ label: 'a', position: 1, audio: null }] }] };
+  assert.equal(mergePack(busy, {}, file, audio).snapshot.kids[0].year, 2);
+});

@@ -942,8 +942,9 @@ function unknownKidScreen(plan, setUpKid) {
     h('div', { class: 'topbar' }, h('span', { class: 'grow' }), h('a', { class: 'btn small grownups', href: '/parent' }, 'Grown-ups')),
     h('div', { class: 'center' },
       h('h1', {}, h('b', {}, plan.name), " isn't set up on this tablet yet."),
-      primary,
-      h('p', { class: 'msg' }, "Progress is saved on this device only. After set-up, a grown-up adds the words."),
+      h('div', { class: 'chips' }, primary, h('a', { class: 'btn big', href: '/parent#import' }, 'Import a backup file')),
+      h('p', { class: 'msg' }, 'Moving from another device? Import its backup file instead.'),
+      h('p', { class: 'msg' }, 'Progress is saved on this device only.'),
       msg,
       plan.others.length > 0 && h('p', { class: 'msg' }, 'Or play as:'),
       plan.others.length > 0 && h('div', { class: 'chips' }, plan.others.map((k) => h('button', { type: 'button', class: 'btn', onclick: () => openKid(k.slug) }, k.name)))));

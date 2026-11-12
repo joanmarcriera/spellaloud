@@ -12,7 +12,7 @@
 //
 // snapshot = {
 //   kids:     [{slug, name, year, settings}],
-//   weeks:    [{kid, week_start:'YYYY-MM-DD', term?, words:[{label, position, audio:'audio/3.wav'|null, audio_source?:'tts', cleared_at?}]}],
+//   weeks:    [{kid, week_start:'YYYY-MM-DD', term?, words:[{label, position, audio:'audio/3.wav'|null, audio_source?, cleared_at?}]}],
 //   sessions: [{kid, created_at, mode, settings, results:[{week_start, label, correct}]}]
 // }
 // Words are identified by (kid, week_start, label lower-cased), never by database id, so merges
@@ -286,7 +286,12 @@ export function mergePack(existing, existingAudio, incoming, incomingAudio, mode
   let counter = 0;
   const fresh = () => { let n; do { n = 'audio/m' + (++counter) + '.wav'; } while (audio[n]); return n; };
   const kidSlugs = new Set(out.kids.map((k) => k.slug));
-  for (const k of incoming.kids) if (!kidSlugs.has(k.slug)) out.kids.push(structuredClone(k));
+  // An empty child here (made from a bookmark, default year) takes the file's record.
+  const empty = (slug) => !out.weeks.some((w) => w.kid === slug) && !out.sessions.some((s) => s.kid === slug);
+  for (const k of incoming.kids) {
+    if (!kidSlugs.has(k.slug)) out.kids.push(structuredClone(k));
+    else if (empty(k.slug)) out.kids[out.kids.findIndex((x) => x.slug === k.slug)] = structuredClone(k);
+  }
   const byKey = new Map(out.weeks.map((w) => [weekKey(w), w]));
   for (const iw of incoming.weeks) {
     const have = byKey.get(weekKey(iw));
