@@ -1,7 +1,7 @@
 # Moving from the home-server build to the browser app
 
 For a family that ran the old home-server ("family") build (`ash.<home>` / `finn.<home>`, SQLite on the NAS) and
-now uses the browser-only app. Nothing on the server is changed; keep it running until step 4 is checked.
+now uses the browser-only app. The export only reads the data; the stopped app can be restarted to roll back.
 
 ## 0. Stop the old app first
 
