@@ -81,10 +81,11 @@ test('loadVoices returns immediately when present, waits for voiceschanged, time
 import { parseVoiceMode, storedVoiceMode } from '../static/voice.js';
 test('voice mode defaults to recording and survives blocked storage', () => {
   assert.equal(parseVoiceMode('voice'), 'voice');
-  assert.equal(parseVoiceMode('nonsense'), 'recording');
-  assert.equal(parseVoiceMode(null), 'recording');
+  assert.equal(parseVoiceMode('recording'), 'recording');
+  assert.equal(parseVoiceMode('nonsense'), 'voice');
+  assert.equal(parseVoiceMode(null), 'voice'); // never chosen: British voice
   assert.equal(storedVoiceMode({ getItem: () => 'voice' }), 'voice');
-  assert.equal(storedVoiceMode({ getItem: () => { throw new Error('blocked'); } }), 'recording');
+  assert.equal(storedVoiceMode({ getItem: () => { throw new Error('blocked'); } }), 'voice');
 });
 
 // ---- per-child voice choice (Vikunja #5570) ----

@@ -51,6 +51,9 @@ export const VOICE_STEPS = {
   chromeos: ['Open Settings > Accessibility > Text-to-Speech > Voices.', 'Under English choose English (United Kingdom) and let it download.', 'Come back here and reload the page.'],
   other: ['This browser may only have online voices, which the app does not use (they would send each word to the internet).', 'Use a phone, tablet or computer with an English (UK) voice installed, or record the words yourself.'],
 };
+/** Fully Kiosk (Android WebView): no Web Speech voices, but its JavaScript Interface reads words with the tablet's voice. */
+export const FULLY_STEPS = ['In Android Settings > Text-to-speech output, choose the Google engine and install English (United Kingdom).',
+  'In Fully Kiosk Settings > Advanced Web Settings, turn on Enable JavaScript Interface (needs Fully PLUS).', 'Reload this page.'];
 /** A settings shortcut where the platform allows a web page to open one (iOS and ChromeOS do not). */
 export const VOICE_LINK = {
   android: 'intent:#Intent;action=com.android.settings.TTS_SETTINGS;end',
@@ -329,10 +332,12 @@ export function openTour(deps) {
         ];
       }
       const link = VOICE_LINK[platform];
+      const kiosk = /;\s*wv\)/.test(navigator.userAgent); // an app's built-in browser, e.g. Fully Kiosk on a wall display
       return [
-        el('p', { class: 'vstatus' }, `No British voice on this ${PLATFORM_NAME[platform]} yet. Two choices:`),
-        el('h3', {}, 'Install a free British voice (once, about 2 minutes)'),
-        steps(VOICE_STEPS[platform]),
+        el('p', { class: 'vstatus' }, `No British voice on this ${kiosk ? 'screen' : PLATFORM_NAME[platform]} yet.`),
+        el('h3', {}, 'Recommended: install a free British voice (once, about 2 minutes)'),
+        el('p', { class: 'note' }, 'It reads every word clearly, so nobody has to record them each week.'),
+        steps(kiosk ? FULLY_STEPS : VOICE_STEPS[platform]),
         link ? el('p', {}, el('a', { class: 'btn small', href: link }, 'Open the voice settings')) : null,
         el('p', { class: 'note' }, 'Steps for other devices are on the Grown-ups page under "Get a British voice on this device". The app never uses online voices.'),
         ...own,

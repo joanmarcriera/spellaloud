@@ -225,9 +225,10 @@ export function stopSpeech(synth) {
 
 /** Per-device parent setting (localStorage, like the screen scale): which source reads the words. */
 export const VOICE_MODE_KEY = 'spellings.voice';
-/** 'recording' (the child's own voice, the family default) or 'voice' (en-GB speech synthesis). */
-export function parseVoiceMode(raw) { return raw === 'voice' ? 'voice' : 'recording'; }
-/** Read the stored mode; storage may be blocked, then default to 'recording'. */
+/** 'voice' (en-GB speech, the default) or 'recording' (a parent chose recordings first). With no British voice on the
+ *  device chooseSource plays the recording anyway, so the default never silences a recorded word. */
+export function parseVoiceMode(raw) { return raw === 'recording' ? 'recording' : 'voice'; }
+/** Read the stored mode; storage may be blocked, then the default 'voice'. */
 export function storedVoiceMode(storage = globalThis.localStorage) {
-  try { return parseVoiceMode(storage.getItem(VOICE_MODE_KEY)); } catch { return 'recording'; }
+  try { return parseVoiceMode(storage.getItem(VOICE_MODE_KEY)); } catch { return 'voice'; }
 }

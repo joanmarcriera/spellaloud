@@ -454,8 +454,8 @@ async function paintVoiceBox() {
   let v = null;
   try { v = pickVoice(await loadVoices(globalThis.speechSynthesis)); } catch { /* none */ }
   document.getElementById('vnote').textContent = v
-    ? `This device has a British voice (${v.name}). It is used only if you choose "British voice"; otherwise each child's own recording is played.`
-    : 'This device has no British voice, so recordings are always used. Words without a recording must be recorded.';
+    ? `This device reads the words in a British voice (${v.name}). Choose "Own recordings" to play recordings first.`
+    : 'No British voice on this device yet, so recordings are used and every word must be recorded. Recommended: install one.';
   if (!v) document.getElementById('vnote').append(' ', voiceHelpLink(), '.');
   await paintKidVoices();
 }
