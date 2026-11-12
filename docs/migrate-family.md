@@ -3,6 +3,11 @@
 For a family that ran the old home-server ("family") build (`ash.<home>` / `finn.<home>`, SQLite on the NAS) and
 now uses the browser-only app. Nothing on the server is changed; keep it running until step 4 is checked.
 
+## 0. Stop the old app first
+
+Stop it before exporting, so no practice is saved on the server after the copy (TrueNAS: Apps > spellings > Stop,
+or `midclt call app.stop spellings`). Keep the dataset: it stays covered by the snapshots and is the fallback.
+
 ## 1. Export on the server (read-only)
 
     # on the NAS / host that holds SPELLING_DATA_DIR
@@ -34,4 +39,5 @@ Fully Kiosk: allow the new host for the microphone (`microphoneAccess`), as was 
 ## 4. Check, then retire
 
 On the wall display: each child's stars and streak match the old app, *This week* plays, a recorded word plays
-in the child's voice. Then stop the old app and its proxy hosts; keep the NAS dataset (snapshots) as the backup.
+in the child's voice. Then disable the old proxy hosts and take a first backup from the wall display
+(Grown-ups > Back up / move to another device). Keep the NAS dataset; restart the app there to roll back.
