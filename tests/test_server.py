@@ -509,6 +509,15 @@ class TestSettings(Base):
         self.assertEqual((st, s), (200, base))
 
 
+    def test_optional_grown_up_switches(self):
+        """2026-11-12: noKnowIt / noSelfCheck / controls are stored only when true; absent = today's behaviour."""
+        base = {"speed": "fast", "repeats": 3, "pause": "short", "order": "mix"}
+        st, s, _ = self.req("PUT", "/api/kids/ash/settings", {**base, "noKnowIt": True, "noSelfCheck": True, "controls": True})
+        self.assertEqual((st, s.get("noKnowIt"), s.get("noSelfCheck"), s.get("controls")), (200, True, True, True))
+        st, s, _ = self.req("PUT", "/api/kids/ash/settings", {**base, "controls": "yes"})
+        self.assertEqual((st, s), (200, base))  # only boolean true counts
+
+
 class TestSessions(Base):
     def test_stars_and_score(self):
         w = self.mkweek(words=list("abcd"))

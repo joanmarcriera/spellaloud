@@ -27,6 +27,7 @@
 // Big Spell and Tricky words). Both ride in kid.settings, so they travel in the export file like voice does.
 
 import { validVoiceName } from './voice.js';
+import { cleanKidFlags } from './kidopts.js';
 import { CALENDARS, calendarId, isTermLabel, termOrder, termYear, halfTermOf, currentHalfTerm, halfTermNeighbours } from './terms.js';
 
 export class ApiError extends Error {
@@ -407,6 +408,7 @@ export async function createStore(backend, { clock = () => new Date(), tz = 'Eur
       kid.settings = { speed: b.speed, repeats: b.repeats, pause: b.pause, order: b.order };
       if (b.voice) kid.settings.voice = b.voice; // optional: the chosen en-GB speech voice (absent = automatic)
       if (b.typeMode === true) kid.settings.typeMode = true; // optional experimental flag (#5604); absent = off
+      Object.assign(kid.settings, cleanKidFlags(b)); // grown-up switches (kidopts.js); absent = today's behaviour
       Object.assign(kid.settings, termSettings); // optional: school calendar + term switches (absent = approximate, all on)
       await save();
       return [200, { ...kid.settings }];

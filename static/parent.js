@@ -16,6 +16,7 @@ import { isTypeModeOn } from './typemode.js';
 import { bulkDeletePlan, bulkConfirmText, selectionState, bulkButtonText } from './bulk.js';
 import { CALENDARS, calendarId } from './terms.js';
 import { openTour, shouldAutoStart, tourSeen, SOURCE_URL } from './tour.js';
+import { KID_FLAGS, FLAG_LABELS } from './kidopts.js';
 
 const root = document.getElementById('kids');
 const toastEl = document.getElementById('toast');
@@ -296,6 +297,54 @@ function kidTools(kid, t) {
     step2, msg);
 }
 
+/**
+ * Change some of a child's settings without undoing anyone else's: read what is stored NOW, apply `change` (a
+ * function that edits the copy), save it whole. Every settings control on this page goes through here (review
+ * 2026-11-12: a picker holding an old copy could erase a switch set since the page loaded). Returns the saved settings.
+ */
+async function patchSettings(slug, change) {
+  const cur = (await api('GET', '/api/kids')).find((k) => k.slug === slug);
+  if (!cur) throw new Error('That child is not on this device any more. Reload this page.');
+  const next = { ...cur.settings };
+  change(next);
+  return api('PUT', `/api/kids/${slug}/settings`, next);
+}
+
+/**
+ * "Practice options" (kidopts.js, 2026-11-12): what the child may do on their own. Each switch is saved with the
+ * child's settings (so it travels in a backup file); the settings are saved whole, starting from what is stored now.
+ */
+function kidSwitches(kid) {
+  // With "I know it" hidden AND no self-check, nothing can ever take a word out of Tricky words: say so.
+  const warn = h('p', { class: 'msg err', role: 'status' });
+  const paintWarn = () => {
+    warn.textContent = kid.settings.noKnowIt === true && kid.settings.noSelfCheck === true
+      ? `With both of these off, words stay in ${kid.name}'s Tricky words for good (no test results and no "I know it"). Turn one back on.`
+      : '';
+  };
+  const rows = KID_FLAGS.map((flag) => {
+    const L = FLAG_LABELS[flag];
+    const isSet = kid.settings[flag] === true;
+    const cb = h('input', { type: 'checkbox', 'aria-label': L.text(kid.name), checked: L.ticked ? isSet : !isSet });
+    cb.onchange = async () => {
+      const set = L.ticked ? cb.checked : !cb.checked;
+      cb.disabled = true;
+      try {
+        kid.settings = await patchSettings(kid.slug, (s) => { if (set) s[flag] = true; else delete s[flag]; });
+        toast('Saved for ' + kid.name);
+      } catch (e) { toast(e.message, true); cb.checked = !cb.checked; }
+      cb.disabled = false;
+      paintWarn();
+    };
+    const hint = typeof L.hint === 'function' ? L.hint(kid.name) : L.hint;
+    return h('div', { class: 'switchrow' }, h('label', { class: 'choice' }, cb, ' ', L.text(kid.name)), h('p', { class: 'hint' }, hint));
+  });
+  paintWarn();
+  return h('details', { class: 'kidtools' },
+    h('summary', {}, `Practice options for ${kid.name}`),
+    ...rows, warn);
+}
+
 /** Build one kid's panel from fresh data. */
 async function buildPanel(kid) {
   const t = await transportReady;
@@ -308,6 +357,7 @@ async function buildPanel(kid) {
     h('h2', {}, `${kid.name} (${kid.year === 0 ? 'Reception' : `Year ${kid.year}`})`),
     h('p', { class: 'msg err perr', role: 'alert' }),
     kidTools(kid, t),
+    kidSwitches(kid),
     termInfo && termsBox(kid, t, termInfo),
     noVoiceNotice(kid, weeks, voices),
     addWeekForm(kid),
@@ -425,7 +475,7 @@ async function paintKidVoices() {
       missing ? h('option', { value: chosen, selected: true }, chosen + ' (not on this device)') : null,
       ...voices.map((v) => h('option', { value: v.name, selected: v.name === chosen }, v.name)));
     sel.onchange = async () => {
-      try { await api('PUT', '/api/kids/' + k.slug + '/settings', { ...k.settings, voice: sel.value }); toast('Voice saved for ' + k.name); }
+      try { await patchSettings(k.slug, (s) => { if (sel.value) s.voice = sel.value; else delete s.voice; }); toast('Voice saved for ' + k.name); }
       catch (e) { toast(e.message, true); }
       paintKidVoices();
     };
@@ -436,7 +486,7 @@ async function paintKidVoices() {
 function typeModeToggle(k) {
   const cb = h('input', { type: 'checkbox', id: 'tm-' + k.slug, 'aria-label': 'Type-the-word practice for ' + k.name, checked: isTypeModeOn(k.settings) });
   cb.onchange = async () => {
-    try { await api('PUT', '/api/kids/' + k.slug + '/settings', { ...k.settings, typeMode: cb.checked }); toast('Saved for ' + k.name); }
+    try { await patchSettings(k.slug, (s) => { if (cb.checked) s.typeMode = true; else delete s.typeMode; }); toast('Saved for ' + k.name); }
     catch (e) { toast(e.message, true); }
     paintKidVoices();
   };
@@ -683,6 +733,10 @@ function backupChooser(store, kids, msg) {
   const summary = h('p', { class: 'note', id: 'backup-summary' });
   let busy = false; // an export is in flight: the button stays off even if a box is ticked meanwhile
   const preset = (name) => { for (const k of CONTENT_KEYS) what[k].cb.checked = BACKUP_PRESETS[name][k]; update(); };
+  const presetBtns = {
+    everything: h('button', { type: 'button', class: 'btn small preset', 'aria-pressed': 'true', onclick: () => preset('everything') }, 'Everything, for me'),
+    share: h('button', { type: 'button', class: 'btn small preset', 'aria-pressed': 'false', onclick: () => preset('share') }, 'To share with another parent'),
+  };
   const choice = () => Object.fromEntries(CONTENT_KEYS.map((k) => [k, what[k].cb.checked]));
   function update() {
     const c = choice();
@@ -690,6 +744,10 @@ function backupChooser(store, kids, msg) {
     const all = CONTENT_KEYS.every((k) => c[k]);
     const none = CONTENT_KEYS.every((k) => !c[k]);
     go.textContent = none ? 'Export the words to share' : all && chosen.length === who.length ? 'Export a full backup' : 'Export the chosen parts';
+    for (const [name, b] of Object.entries(presetBtns)) { // a preset looks pressed while the ticks match it
+      const on = CONTENT_KEYS.every((k) => c[k] === BACKUP_PRESETS[name][k]);
+      b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on);
+    }
     go.disabled = !chosen.length || busy;
     summary.textContent = chosen.length
       ? `The file will hold: ${describeContents(c)}, for ${c.names ? chosen.map((x) => x.row.textContent.trim()).join(', ') : `${chosen.length} child${chosen.length === 1 ? '' : 'ren'} (no names)`}.`
@@ -712,9 +770,7 @@ function backupChooser(store, kids, msg) {
   update();
   return h('div', { class: 'backupchooser' },
     h('h3', {}, 'Make a backup file'),
-    h('div', { class: 'screenbox' },
-      h('button', { type: 'button', class: 'btn small', onclick: () => preset('everything') }, 'Everything, for me'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => preset('share') }, 'To share with another parent')),
+    h('div', { class: 'presets' }, presetBtns.everything, presetBtns.share),
     h('ul', { class: 'note backuphelp' },
       h('li', {}, 'To keep a copy or move to a new phone or tablet: choose Everything, then save the file somewhere safe.'),
       h('li', {}, "To share with another parent: choose \"To share\" (words only: no recordings of your child's voice, no scores, no names), then send them the file."),
@@ -762,7 +818,7 @@ function importSection(store, kids, msg) {
       sync();
     } catch (e) { info.textContent = e.message; }
   });
-  const importBtn = h('button', { type: 'button', class: 'btn small', onclick: async () => {
+  const importBtn = h('button', { type: 'button', class: 'btn small solid', onclick: async () => {
     const f = file.files && file.files[0];
     if (!f) { msg.textContent = 'Choose a .spellings file first.'; return; }
     if (target.value === CHOOSE) { msg.textContent = 'Choose which of your children gets the words.'; target.focus(); return; }
@@ -777,8 +833,7 @@ function importSection(store, kids, msg) {
   return h('div', { class: 'importbox' },
     h('h3', {}, 'Import a file'),
     h('p', { class: 'note' }, 'A backup you made, or words another parent sent you.'),
-    file, info,
-    h('div', { class: 'screenbox' }, target, modeSel, importBtn));
+    file, info, target, modeSel, importBtn);
 }
 paintBackupBox().catch(() => { /* backup panel is optional; the rest of the page still works */ });
 

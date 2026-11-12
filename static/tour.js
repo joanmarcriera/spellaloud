@@ -416,6 +416,7 @@ export function openTour(deps) {
         el('div', { class: 'screenbox' },
           el('button', { type: 'button', class: 'btn small', onclick: () => finish('done') }, 'Stay on the Grown-ups page')),
         platform === 'ios' || platform === 'android' ? el('p', { class: 'note' }, `Tip: put Spellaloud on your home screen. ${INSTALL_STEPS[platform]}`) : null,
+        el('p', { class: 'note' }, 'Grown-up options: on the Grown-ups page each child has "Practice options" (the "I know it" button, the self-check, and Previous / Next / Finish buttons during the test). Hold a button on the child\'s screen for a second to see what it does.'),
         el('p', { class: 'note' }, 'Replay this tour any time: Grown-ups > "Take the tour".'),
         el('p', { class: 'note' }, 'Free and open source: ', el('a', { class: 'btn small', href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, 'Source code on GitHub')),
       ];

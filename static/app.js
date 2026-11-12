@@ -6,6 +6,7 @@ import { feedbackButton } from './feedback.js';
 import { onecardEnabled, cardState, cardMark, cardStep, cardDone, cardProgress } from './onecard.js';
 import { typeModeEntry, typeResults, checkTyped } from './typemode.js';
 import { bigSpellLabel } from './terms.js';
+import { knowItShown, selfCheckOn, controlsOn, modeTip, settingTip, attachTip, hideTip, jumpTarget } from './kidopts.js';
 import { SPEEDS, markLayout, PAUSES, SCALE_KEY, parseScale, mixToMono, trimSilence, encodeWav, buildSchedule, starsFor, pctFor, weekLabel } from './lib.js';
 
 const root = document.getElementById('app');
@@ -92,6 +93,7 @@ async function getMic() {
   return MIC.stream;
 }
 function show(...nodes) {
+  hideTip(); // a tip belongs to the screen it explained
   if (leaveHook) { try { leaveHook(); } catch (e) { console.error(e); } leaveHook = null; }
   if (!keepMic) releaseMic();
   const screen = h('div', { class: 'screen active' }, ...nodes);
@@ -195,8 +197,9 @@ function renderHome() {
       feedbackButton({ page: 'kid', kid: S.kid.slug }), // for parents: files a note in Vikunja (feedback.js)
       h('a', { class: 'btn small grownups', href: '/parent' }, 'Grown-ups')),
     h('div', { class: 'center' },
-      h('div', { class: 'tabs', role: 'tablist' }, MODE_TABS.map(([m, t]) =>
-        h('button', { type: 'button', class: 'tab', role: 'tab', 'aria-selected': String(S.mode === m), onclick: () => pickMode(m) }, m === 'term' ? bigSpellLabel(t, S.terms, S.scope) : t))),
+      // A grown-up who rests the mouse on a tab or chip (or holds it) sees what it does (kidopts.js attachTip).
+      h('div', { class: 'tabs', role: 'tablist' }, MODE_TABS.map(([m, t]) => attachTip(
+        h('button', { type: 'button', class: 'tab', role: 'tab', 'aria-selected': String(S.mode === m), onclick: () => pickMode(m) }, m === 'term' ? bigSpellLabel(t, S.terms, S.scope) : t), modeTip(m)))),
       S.mode !== 'week' && termChips(),
       play,
       // Experimental "type the word" mode (#5604): present only when the parent has switched the flag on.
@@ -208,10 +211,10 @@ function renderHome() {
       plan.blocked && h('a', { class: 'btn small', href: '/parent#voice-help' }, 'How to get a British voice'),
       S.mode === 'tricky' && n > 0 && h('div', { class: 'looklist' }, p.words.map((w) => h('div', { class: 'markrow' },
         h('span', { class: 'lbl' }, w.label),
-        btn('check', 'I know it', 'green', () => knowIt(w.id, () => { p.words = p.words.filter((x) => x.id !== w.id); renderHome(); }))))),
-      h('div', { class: 'chips' }, Object.entries(SETTING_CHOICES).map(([key, c]) =>
+        knowItShown(S.kid.settings) && btn('check', 'I know it', 'green', () => knowIt(w.id, () => { p.words = p.words.filter((x) => x.id !== w.id); renderHome(); }))))),
+      h('div', { class: 'chips' }, Object.entries(SETTING_CHOICES).map(([key, c]) => attachTip(
         h('button', { type: 'button', class: 'chip', onclick: () => cycleSetting(key) },
-          h('small', {}, c.label), h('b', {}, c.text[S.kid.settings[key]]))))));
+          h('small', {}, c.label), h('b', {}, c.text[S.kid.settings[key]])), settingTip(key))))));
 }
 
 // Settings are saved one PUT at a time, latest wins; a failed save reverts the chips to the last saved values.
@@ -224,15 +227,20 @@ function cycleSetting(key) {
   renderHome(); // optimistic: the chip changes at once
   flushSettings();
 }
+const pickChips = (s) => ({ speed: s.speed, repeats: s.repeats, pause: s.pause, order: s.order });
 async function flushSettings() {
   if (flushing) return; // the running loop will pick up the newest value
   flushing = true;
   try {
     for (;;) {
-      const snap = { ...S.kid.settings };
-      if (JSON.stringify(snap) === JSON.stringify(savedSettings)) break;
-      await api('PUT', `/api/kids/${S.kid.slug}/settings`, snap);
-      savedSettings = snap;
+      const chips = pickChips(S.kid.settings);
+      if (JSON.stringify(chips) === JSON.stringify(pickChips(savedSettings))) break;
+      // The chips own only these four keys. Merge them over what is stored NOW, so a switch a grown-up set on the
+      // Grown-ups page since this screen loaded (voice, Practice options, terms) is not undone by a chip tap.
+      const fresh = (await api('GET', '/api/kids')).find((k) => k.slug === S.kid.slug);
+      const saved = await api('PUT', `/api/kids/${S.kid.slug}/settings`, { ...(fresh ? fresh.settings : savedSettings), ...chips });
+      savedSettings = { ...saved };
+      S.kid.settings = { ...saved, ...pickChips(S.kid.settings) }; // a tap made while saving wins; the loop saves it next
     }
   } catch (e) {
     S.kid.settings = { ...savedSettings };
@@ -367,7 +375,12 @@ function startPlaying(again) {
       skipped > 0 && h('p', { class: 'msg' }, `${skipped} word${skipped === 1 ? ' has' : 's have'} no recording yet`),
       h('div', { class: 'row' },
         btn('speaker', 'Hear it again', '', hearAgain),
-        btn('stop', 'Stop', 'danger', stopPlaying))));
+        btn('stop', 'Stop', 'danger', stopPlaying)),
+      // Grown-up switch (kidopts.js, off by default): move between words or end now instead of waiting.
+      controlsOn(settings) && h('div', { class: 'row grownup' },
+        btn('left', 'Previous word', 'small', () => jumpWord(-1)),
+        btn('right', 'Next word', 'small', () => jumpWord(1)),
+        btn('check', 'Finish now', 'small', () => { if (!tooSoon()) finishPlaying(); }))));
   leaveHook = () => { if (P) { P.timer.clear(); P.run++; } stopAudio(); };
   paintPause();
   playStep(0);
@@ -433,6 +446,17 @@ function hearAgain() {
   playStep(first);
 }
 
+/** Grown-up buttons: the first step of the previous / next word (Next after the last word finishes). */
+function jumpWord(delta) {
+  if (tooSoon()) return;
+  const j = jumpTarget(P.sched.steps, P.i, delta);
+  P.timer.clear(); stopAudio();
+  try { speechSynthesis.resume(); } catch { /* no speech API */ } // a cancel while paused can leave Chrome/Safari paused
+  P.paused = false; paintPause();
+  if (j < 0) return finishPlaying();
+  playStep(j);
+}
+
 function stopPlaying() { if (tooSoon()) return; P.run++; P.timer.clear(); stopAudio(); P = null; home(); }
 
 function finishPlaying() {
@@ -443,6 +467,15 @@ function finishPlaying() {
 
 /** After the last word: the kid picks Play again (same words, same order) or Check my words. */
 function doneScreen(done) {
+  if (!selfCheckOn(done.settings)) { // grown-up switch: no self-check, the book goes to a grown-up instead
+    show(h('div', { class: 'center' },
+      h('div', { class: 'score' }, 'All done!'),
+      h('p', { class: 'msg' }, 'Show your book to a grown-up.'),
+      h('div', { class: 'row' },
+        btn('again', 'Play again', '', () => startPlaying(done)),
+        btn('home', 'Home', 'green', home))));
+    return;
+  }
   show(h('div', { class: 'center' },
     h('div', { class: 'score' }, 'All done!'),
     h('div', { class: 'row' },
@@ -833,6 +866,9 @@ const STATUS_TEXT = Object.fromEntries(STATUS_FILTERS);
  * speaker, the word and a status pill; tap the speaker to hear one. Nothing is marked.
  * The filter chips sit in the top bar beside the title, so the cards get the rest of the height.
  */
+/** Can this word be heard here: its recording, or the British voice (the Look speaker was silent without a clip). */
+const canSay = (w) => w.has_audio || !voicesLoaded || !!resolveVoice(allVoices, S.kid.settings.voice);
+
 function lookScreen(week, hist) {
   let filter = 'all';
   const list = h('div', { class: 'looklist wordgrid' });
@@ -843,14 +879,14 @@ function lookScreen(week, hist) {
       h('button', { type: 'button', class: 'tab', role: 'tab', 'aria-selected': String(filter === f), onclick: () => { filter = f; paint(); } }, `${t} ${count(f)}`)));
     const words = week.words.filter((w) => filter === 'all' || w.status === filter);
     setContent(list, ...words.map((w) => h('div', { class: 'markrow wordcard' },
-      h('button', { type: 'button', class: 'btn', 'aria-label': 'Hear the word', disabled: !w.has_audio,
+      h('button', { type: 'button', class: 'btn', 'aria-label': 'Hear the word', disabled: !canSay(w),
         onclick: () => { unlockAudio(); sayWord(w, S.kid.settings.speed, () => {}); } }, ICONS.speaker),
       h('span', { class: 'lbl' }, w.label),
       h('span', { class: 'state' },
         h('span', { class: `pill ${w.status}` }, STATUS_TEXT[w.status] || 'Not tried'),
         w.history.length > 0 && h('span', { class: 'hist', role: 'img', 'aria-label': 'Recent results' },
           w.history.map((c) => h('i', { class: c ? 'pip got' : 'pip not' }, c ? ICONS.check : ICONS.cross)))),
-      w.tricky && btn('check', 'I know it', 'green', () => knowIt(w.id, () => { w.tricky = false; week.tricky -= 1; paint(); })))));
+      w.tricky && knowItShown(S.kid.settings) && btn('check', 'I know it', 'green', () => knowIt(w.id, () => { w.tricky = false; week.tricky -= 1; paint(); })))));
   };
   show(h('div', { class: 'topbar lookbar' }, btn('home', 'Back', '', weeksScreen),
       h('h1', { class: 'grow' }, `Week of ${weekLabel(week.week_start)}`), tabs),

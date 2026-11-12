@@ -644,6 +644,9 @@ def ep_settings(h, m, q):
         s["voice"] = voice  # optional: the chosen en-GB speech voice (absent = automatic)
     if b.get("typeMode") is True:
         s["typeMode"] = True  # optional experimental flag (#5604); absent = off
+    for flag in ("noKnowIt", "noSelfCheck", "controls"):  # grown-up switches (static/kidopts.js); absent = default
+        if b.get(flag) is True:
+            s[flag] = True
     with db(h.cfg) as con:
         get_kid(con, m["slug"])
         con.execute("UPDATE kid SET settings_json=? WHERE slug=?", (json.dumps(s), m["slug"]))

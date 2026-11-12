@@ -9,6 +9,7 @@
 
 import { buildPack, parsePack, mergePack, packFilename, deliverPack, describeSummary, selectSnapshot, retargetSnapshot, describeContents, contentsOf, BACKUP_PRESETS, CONTENT_KEYS } from './pack.js';
 import { validVoiceName } from './voice.js';
+import { KID_FLAGS } from './kidopts.js';
 import { MAX_AUDIO, MAX_LABEL, MAX_WORDS_PER_WEEK, MAX_TERMS_OFF, mondayOf } from './store.js';
 import { CALENDARS, isTermLabel } from './terms.js';
 
@@ -59,7 +60,7 @@ export function validateSnapshot(snap, audio = {}) {
     const s = k.settings == null ? {} : k.settings;
     if (typeof s !== 'object' || Array.isArray(s)) bad('settings are invalid');
     for (const [key, v] of Object.entries(s)) {
-      if (key === 'typeMode') { if (v !== true && v !== false) bad('settings are invalid'); continue; } // #5604 experimental flag
+      if (key === 'typeMode' || KID_FLAGS.includes(key)) { if (v !== true && v !== false) bad('settings are invalid'); continue; } // #5604 flag, grown-up switches
       if (key === 'calendar') { if (typeof v !== 'string' || !Object.hasOwn(CALENDARS, v)) bad('settings are invalid'); continue; } // school calendar
       if (key === 'terms_off') { if (!Array.isArray(v) || v.length > MAX_TERMS_OFF || !v.every(isTermLabel)) bad('settings are invalid'); continue; } // terms switched off
       if (key === 'voice' ? !validVoiceName(v) : !(key in SETTING_VALUES) || !SETTING_VALUES[key].includes(v)) bad('settings are invalid');

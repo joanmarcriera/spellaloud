@@ -269,7 +269,35 @@ dialog.tour .field { margin: .4rem 0; flex: 1 1 10rem; }
 /* Backup chooser (parent page, 2026-11-12): who and what goes into the file. */
 .backupchooser fieldset { border: 2px solid var(--line); border-radius: 10px; margin: .5rem 0; padding: .4rem .8rem; }
 .backupchooser legend { font-weight: 700; padding: 0 .3rem; }
-.backupchooser .choice { display: flex; align-items: center; gap: .4rem; min-height: 44px; }
-.backupchooser .choice input { width: 1.3rem; height: 1.3rem; flex: none; }
+.choice { display: flex; align-items: center; gap: .4rem; min-height: 44px; }
+.choice input { width: 1.3rem; height: 1.3rem; flex: none; }
 .backuphelp { padding-left: 1.2rem; }
 .importbox select { max-width: 100%; }
+
+/* Hold-to-explain tips on the child's Home (kidopts.js) and the grown-up buttons during a dictation. */
+.holdtip { position: absolute; z-index: 50; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 10px;
+  font-size: 15px; line-height: 1.4; box-shadow: 0 4px 16px rgb(0 0 0 / .25); pointer-events: none; }
+.holdtip::before { content: ""; position: absolute; left: var(--arrow, 50%); top: -7px; margin-left: -7px;
+  border: 7px solid transparent; border-top: 0; border-bottom-color: var(--ink); }
+.holdtip.above::before { top: auto; bottom: -7px; border-bottom: 0; border-top: 7px solid var(--ink); }
+.tab, .chip { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+/* Grown-up buttons in a dictation: full contrast (AA), set apart from Stop by space and a thin rule. */
+.row.grownup { margin-top: 1.6rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.row.grownup .btn { font-size: .85rem; font-weight: 500; min-height: 44px; border-color: #b8c7d6; }
+/* Parent page: details summaries are 44 px tap targets that look tappable. */
+.kidtools > summary { min-height: 44px; display: flex; align-items: center; gap: .4rem; cursor: pointer; font-weight: 600; color: var(--accent); }
+.kidtools > summary::before { content: "▸"; }
+.kidtools[open] > summary::before { content: "▾"; }
+.kidtools > summary::-webkit-details-marker { display: none; }
+.kidtools > summary { list-style: none; }
+.switchrow { margin: .2rem 0 .5rem; }
+.switchrow .hint { margin: -.3rem 0 0 2.4rem; font-size: .85rem; color: #5a606a; }
+.choice input { width: 1.4rem; height: 1.4rem; margin-right: .3rem; }
+.choice:has(input:disabled) { color: var(--ink); }
+.choice input:disabled { accent-color: #7a8794; opacity: 1; }
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: .4rem 0; }
+@media (max-width: 520px) { .presets { grid-template-columns: 1fr; } }
+.btn.preset.on { background: #e6f0fa; border-width: 3px; }
+.importbox select, .importbox .btn { display: block; width: 100%; margin: .4rem 0; }
+.importbox input[type=file]::file-selector-button { font: inherit; min-height: 44px; border: 2px solid var(--accent); border-radius: 12px;
+  background: #fff; color: var(--accent); padding: 0 14px; margin-right: 10px; cursor: pointer; }
