@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Stage the Year 1 and Year 2 list pages into dist/lists/ (Vikunja #4117). Writes files only; no deploy.
+
+Usage:  bin/stage-lists [--src drafts/lists] [--out dist/lists]
+Copies the generated pages for the staged slugs, and drops "Other lists" links to pages that are not staged
+(they would 404). The waitlist form keeps its #TODO-waitlist-endpoint action on purpose: bin/build-dist
+(#4120) refuses to ship it until Marc wires the real collector. Stdlib only.
+"""
+import argparse, pathlib, re, sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+STAGED = ["year-1-common-exception-words", "year-2-common-exception-words",
+          "look-cover-write-check", "how-to-help-your-child-learn-spellings"]  # method pages: Vikunja #4635
+LINK = r'<li><a href="\.\./([a-z0-9-]+)/index\.html">[^<]*</a></li>'
+
+
+def stage(src: pathlib.Path, out: pathlib.Path):
+    n = 0
+    for slug in STAGED:
+        page = (src / slug / "index.html").read_text(encoding="utf-8")
+        # drop links to pages that are not staged
+        page = re.sub(LINK, lambda m: m.group(0) if m.group(1) in STAGED else "", page)
+        (out / slug).mkdir(parents=True, exist_ok=True)
+        (out / slug / "index.html").write_text(page, encoding="utf-8")
+        print("staged", out / slug / "index.html")
+        n += 1
+    return n
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--src", default=str(ROOT / "drafts" / "lists"))
+    ap.add_argument("--out", default=str(ROOT / "dist" / "lists"))
+    a = ap.parse_args()
+    try:
+        stage(pathlib.Path(a.src), pathlib.Path(a.out))
+    except FileNotFoundError as e:
+        sys.exit(f"stage-lists: {e}")
+
+
+if __name__ == "__main__":
+    main()

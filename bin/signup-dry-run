@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""Dry-run sign-up against a waitlist collector (Vikunja #4118). Sends ONE form POST and prints the status.
+
+Usage:  bin/signup-dry-run [URL] [--source lists] [--email test+dryrun@example.invalid]
+Default URL is the local stub (python3 tools/webhook-stub.py). Refuses any non-loopback URL unless --allow-remote,
+so it cannot be pointed at production by accident. Exit 0 on 303, 1 otherwise. Stdlib only.
+"""
+import argparse, http.client, sys, urllib.parse
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("url", nargs="?", default="http://127.0.0.1:8787/waitlist")
+    ap.add_argument("--source", default="lists")
+    ap.add_argument("--email", default="test+dryrun@example.invalid")
+    ap.add_argument("--allow-remote", action="store_true")
+    a = ap.parse_args()
+    u = urllib.parse.urlparse(a.url)
+    if u.hostname not in ("127.0.0.1", "localhost", "::1") and not a.allow_remote:
+        sys.exit("signup-dry-run: refusing non-loopback URL (use --allow-remote deliberately)")
+    body = urllib.parse.urlencode({"email": a.email, "source": a.source})
+    conn = http.client.HTTPConnection(u.hostname, u.port or 80, timeout=10)   # http.client does not follow redirects
+    conn.request("POST", u.path or "/", body, {"Content-Type": "application/x-www-form-urlencoded"})
+    r = conn.getresponse()
+    print(r.status, r.getheader("Location") or "")
+    sys.exit(0 if r.status == 303 else 1)
+
+
+if __name__ == "__main__":
+    main()

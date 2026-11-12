@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""Fill words that have no recording with a local Piper TTS clip (Vikunja #3522).
+
+Usage:
+  bin/fill-missing-audio --base http://HOST:PORT --kid finn --model en_GB-alba-medium.onnx          # dry run (default)
+  bin/fill-missing-audio --base ... --kid ... --model ... --enable                                      # really upload
+  (or SPELLINGS_PIPER_FILL=1 in the environment instead of --enable)
+
+Design: docs/piper-fallback-spec.md. Runs on the Mac/TrueNAS, NOT in the app container (stdlib-only image).
+Privacy: Piper runs locally; the only network traffic is to --base (the family server on the LAN). No cloud TTS.
+A child's recording always wins: words with has_audio true are never touched, and the server answers 409
+if a child clip appears between listing and upload (counted as skipped, not an error).
+Python stdlib only. Exit code 0 on success (even if some words were skipped), 1 if any word failed,
+2 if --enable is given a missing, >500 MB or en_US voice file (checked before anything is synthesised).
+"""
+import argparse
+import http.client
+import io
+import json
+import os
+import struct
+import subprocess
+import sys
+import tempfile
+import wave
+from urllib.parse import urlparse
+
+TARGET_RATE = 22050    # same as the browser pipeline (static/lib.js encodeWav)
+MAX_BYTES = 1_000_000  # server cap is 1 MB
+TIMEOUT_S = 20
+MAX_MODEL_BYTES = 500 * 1024 * 1024  # refuse a voice file over 500 MB (Piper medium voices are ~60 MB)
+
+
+def check_model(path: str, max_bytes: int = MAX_MODEL_BYTES) -> None:
+    """Fail fast, before any synthesis, on a missing, oversized or non-British voice file (ValueError)."""
+    if not os.path.isfile(path):
+        raise ValueError(f"voice model not found: {path}")
+    if os.path.getsize(path) > max_bytes:
+        raise ValueError(f"voice model is over the 500 MB cap: {path}")
+    if os.path.basename(path).lower().replace("-", "_").startswith("en_us"):
+        raise ValueError("US voices are rejected (same reason as static/voice.js): use an en_GB voice")
+
+
+def to_target_wav(raw: bytes) -> bytes:
+    """Convert a PCM WAV Piper wrote to 22.05 kHz mono 16-bit (linear resample, downmix by averaging)."""
+    with wave.open(io.BytesIO(raw)) as w:
+        ch, width, rate, n = w.getnchannels(), w.getsampwidth(), w.getframerate(), w.getnframes()
+        frames = w.readframes(n)
+    if width != 2:
+        raise ValueError(f"expected 16-bit PCM, got {width * 8}-bit")
+    s = struct.unpack("<%dh" % (len(frames) // 2), frames)
+    if ch > 1:
+        s = [sum(s[i:i + ch]) // ch for i in range(0, len(s) - ch + 1, ch)]
+    if rate != TARGET_RATE and s:
+        out_n = max(1, round(len(s) * TARGET_RATE / rate))
+        step = rate / TARGET_RATE
+        res = []
+        for i in range(out_n):
+            pos = i * step
+            j = int(pos)
+            f = pos - j
+            a = s[min(j, len(s) - 1)]
+            b = s[min(j + 1, len(s) - 1)]
+            res.append(int(a + (b - a) * f))
+        s = res
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as o:
+        o.setnchannels(1)
+        o.setsampwidth(2)
+        o.setframerate(TARGET_RATE)
+        o.writeframes(struct.pack("<%dh" % len(s), *s))
+    return buf.getvalue()
+
+
+def synth(piper: str, model: str, label: str) -> bytes:
+    """Run piper with an argument list (no shell); the label goes in on stdin. Returns a target-format WAV."""
+    with tempfile.TemporaryDirectory() as d:
+        out = os.path.join(d, "clip.wav")
+        subprocess.run([piper, "--model", model, "--output_file", out], input=label.encode(),
+                       check=True, timeout=TIMEOUT_S, capture_output=True)
+        with open(out, "rb") as f:
+            wav = to_target_wav(f.read())
+    if len(wav) > MAX_BYTES:
+        raise ValueError(f"clip is {len(wav)} bytes, over the {MAX_BYTES} cap")
+    return wav
+
+
+class Api:
+    """Minimal client for the family server (no auth: LAN only)."""
+
+    def __init__(self, base: str):
+        u = urlparse(base)
+        self.host, self.port, self.https = u.hostname, u.port, u.scheme == "https"
+
+    def call(self, method, path, body=None, ctype=None):
+        cls = http.client.HTTPSConnection if self.https else http.client.HTTPConnection
+        c = cls(self.host, self.port, timeout=30)
+        try:
+            c.request(method, path, body=body, headers={"Content-Type": ctype} if ctype else {})
+            r = c.getresponse()
+            return r.status, r.read()
+        finally:
+            c.close()
+
+
+def missing_words(api: Api, kid: str):
+    st, data = api.call("GET", f"/api/kids/{kid}/weeks")
+    if st != 200:
+        raise RuntimeError(f"weeks list failed: HTTP {st}")
+    return [(w["id"], w["label"]) for wk in json.loads(data) for w in wk["words"] if not w["has_audio"]]
+
+
+def run(args, synth_fn=synth) -> dict:
+    api = Api(args.base)
+    todo = missing_words(api, args.kid)
+    res = {"missing": len(todo), "uploaded": 0, "skipped_child": 0, "failed": 0, "dry_run": not args.enable}
+    for wid, label in todo:
+        if not args.enable:
+            print(f"[dry-run] would fill word {wid} {label!r}")
+            continue
+        try:
+            wav = synth_fn(args.piper, args.model, label)
+            st, _ = api.call("PUT", f"/api/words/{wid}/audio?source=tts", wav, "audio/wav")
+        except Exception as e:  # one bad word must not stop the batch
+            print(f"FAIL word {wid} {label!r}: {e}", file=sys.stderr)
+            res["failed"] += 1
+            continue
+        if st == 200:
+            res["uploaded"] += 1
+        elif st == 409:
+            res["skipped_child"] += 1
+        else:
+            print(f"FAIL word {wid}: HTTP {st}", file=sys.stderr)
+            res["failed"] += 1
+    return res
+
+
+def main(argv=None) -> int:
+    p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    p.add_argument("--base", required=True, help="family server URL, e.g. http://192.0.2.10:8080")
+    p.add_argument("--kid", required=True)
+    p.add_argument("--model", required=True, help="path to an en-GB Piper .onnx voice")
+    p.add_argument("--piper", default="piper", help="piper executable")
+    p.add_argument("--enable", action="store_true", default=os.environ.get("SPELLINGS_PIPER_FILL") == "1",
+                   help="actually synthesise and upload (default: dry run)")
+    args = p.parse_args(argv)
+    if args.enable:  # a dry run needs no voice file
+        try:
+            check_model(args.model)
+        except ValueError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
+    res = run(args)
+    print(json.dumps(res))
+    return 1 if res["failed"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

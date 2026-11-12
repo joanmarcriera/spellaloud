@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- DRAFT landing page + waitlist (Vikunja #3526). NOT PUBLISHED. Working name "Spellaloud" (see docs/validation/01).
+     Static, no scripts, no analytics, no third-party fonts. The form action is a placeholder: wire it to the
+     sites-stack/n8n collector only after Marc approves (collects an email address only). -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spellaloud: spelling practice that reads the words for you</title>
+<meta name="description" content="Snap the school spelling sheet. The app says the words in a British voice, your child writes them, ticks what they got right, and sees their progress. No ads, no tracking.">
+<style>
+  :root { --bg:#fffaf0; --fg:#1d2430; --muted:#566070; --accent:#1f6f5c; --card:#ffffff; --line:#e3dccb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14181f; --fg:#eef1f5; --muted:#a3adbb; --accent:#6fd1b5; --card:#1c222b; --line:#2c3440; } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif }
+  main { max-width:40rem; margin:0 auto; padding:2rem 1rem 3rem }
+  h1 { font-size:2rem; line-height:1.2; margin:0 0 .75rem }
+  .lede { font-size:1.2rem; color:var(--muted) }
+  ol, ul { padding-left:1.25rem } li { margin:.35rem 0 }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1.25rem; margin:1.5rem 0 }
+  label { display:block; font-weight:600; margin-bottom:.4rem }
+  input[type=email] { width:100%; padding:.8rem; font:inherit; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg) }
+  button { margin-top:.8rem; padding:.8rem 1.4rem; font:inherit; font-weight:700; border:0; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid var(--accent); outline-offset:2px }
+  small, footer { color:var(--muted); font-size:.9rem } a { color:var(--accent) }
+</style>
+</head>
+<body>
+<main>
+  <h1>The spelling list, read aloud, so you do not have to.</h1>
+  <p class="lede">Is your child given spellings every week, and you are not sure how to say the words? Spellaloud is a small app, being built now, that reads them in a British voice. It is not released yet; join the list below and I will tell you when it is ready.</p>
+  <ol>
+    <li>Type the school's spelling list (photographing it is planned, not promised).</li>
+    <li>Your child hears each word, writes it in their book, and ticks what they got right.</li>
+    <li>See which words are tricky and practise those.</li>
+  </ol>
+  <ul>
+    <li><strong>No ads. No tracking. No accounts.</strong> Everything stays on your own phone or tablet.</li>
+    <li>Works offline once installed. Made for children in English primary schools, Reception to Year 6.</li>
+    <li>Made by a parent who needed it for his own two children.</li>
+  </ul>
+  <p><a class="trylink" href="/try/parent/#sl=1&amp;t=Year+2+words&amp;w=door&amp;w=floor&amp;w=poor&amp;w=because&amp;w=find&amp;w=kind&amp;w=mind&amp;w=behind&amp;w=child&amp;w=children&amp;w=wild&amp;w=climb&amp;w=most&amp;w=only&amp;w=both&amp;w=old&amp;w=cold&amp;w=gold&amp;w=hold&amp;w=told&amp;w=every&amp;w=everybody&amp;w=even&amp;w=great&amp;w=break&amp;w=steak&amp;w=pretty&amp;w=beautiful&amp;w=after&amp;w=fast&amp;w=last&amp;w=past&amp;w=father&amp;w=class&amp;w=grass&amp;w=pass&amp;w=plant&amp;w=path&amp;w=bath&amp;w=hour&amp;w=move&amp;w=prove&amp;w=improve&amp;w=sure&amp;w=sugar&amp;w=eye&amp;w=could&amp;w=should&amp;w=would&amp;w=who&amp;w=whole&amp;w=any&amp;w=many&amp;w=clothes&amp;w=busy&amp;w=people&amp;w=water&amp;w=again&amp;w=half&amp;w=money">Try it now in your browser, with the Year 2 words</a><br><small>Opens the early version of the app. Your words stay on your own device; nothing is sent anywhere.</small></p>
+  <div class="card">
+    <!-- action is a placeholder until Marc approves the collector -->
+    <form method="post" action="#TODO-waitlist-endpoint">
+      <input type="hidden" name="source" value="waitlist">
+      <label for="email">Tell me when it is ready</label>
+      <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+      <button type="submit">Join the waiting list</button>
+      <p><small>One email when the app opens, and nothing else. We store only your email address, and you can ask us to delete it. See the <a href="/privacy/">privacy page</a>.</small></p>
+    </form>
+  </div>
+  <section id="is-this-right" aria-labelledby="is-this-right-h">
+  <h2 id="is-this-right-h">Is this right for us?</h2>
+  <dl>
+    <dt id="o1">Will my child&#x27;s school list already be in it?</dt>
+    <dd>Not built in: schools set their own lists, so you type the week&#x27;s words once and the app reads them aloud in a British voice. Photographing the sheet is planned, not promised. <a href="https://apps.apple.com/gb/app/spelling-shed/id1264568098">Source</a></dd>
+    <dt id="o2">Will my lists survive an update?</dt>
+    <dd>Words and recordings live in your browser&#x27;s own storage on the device, while an update only replaces the app&#x27;s code, so your lists stay put. Clearing website data does remove them, which is why the app reminds you to keep a backup file. <a href="/help/#lost-words">Read more</a></dd>
+    <dt id="o3">What if I lose or change the phone?</dt>
+    <dd>Because nothing is held on our side, the way to move is a backup file: export it on the old device and import it on the new one. Keep that file somewhere safe, such as Files or an email to yourself. <a href="/help/#lost-words">Read more</a></dd>
+    <dt id="o4">Is it a subscription?</dt>
+    <dd>Practising is free and there is no recurring charge. The only extra we propose is an optional one-off backup pack at 2.99 pounds, not on sale yet. <a href="/terms/">Read more</a></dd>
+    <dt id="o5">What happens to my child&#x27;s data?</dt>
+    <dd>Words, recordings and scores stay on your own device and never reach us. The only thing we hold is the email address of anyone who joins the waiting list. <a href="/privacy/">Read more</a></dd>
+    <dt id="o6">What if it does not suit us, can I get a refund?</dt>
+    <dd>If you buy the optional backup pack, the draft terms say you can email within 30 days and ask for a refund without giving a reason. The terms are a draft, pending Marc&#x27;s confirmation. <a href="/terms/#refund">Read more</a></dd>
+  </dl>
+  </section>
+  <footer><nav class="trust" aria-label="About this site"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/help/">Help</a> · <a href="mailto:support@spellaloud.invalid">support@spellaloud.invalid</a></nav>
+  <p>Spellaloud is a working name. Not affiliated with any school or with the Department for Education.</p></footer>
+</main>
+</body>
+</html>

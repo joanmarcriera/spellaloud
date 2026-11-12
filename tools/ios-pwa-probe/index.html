@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Spellings iOS probe</title>
+<!-- Vikunja #4060. Self-contained: imports the real static/*.js modules, no third-party requests, no data leaves the phone.
+     Serve from the REPO ROOT so the ../../static imports resolve (see docs/validation/07-ios-safari-probe.md). -->
+<style>
+  body { font: 16px/1.4 -apple-system, system-ui, sans-serif; margin: 16px; max-width: 40rem; }
+  button { font-size: 1.1rem; padding: .7rem 1rem; margin: .3rem .3rem .3rem 0; }
+  li { margin: .5rem 0; }
+  .pass { color: #0a7a2f; } .fail { color: #b3261e; font-weight: 700; } .skip { color: #7a5a00; }
+  small { color: #555; display: block; word-break: break-word; }
+</style>
+</head>
+<body>
+<h1>iOS PWA probe</h1>
+<p>Tap <b>Run all checks</b> once, allow the microphone, and say a few words for 3 seconds. Then <b>Copy report</b>.
+Run it twice: in a Safari tab, and from the Home Screen (Share, Add to Home Screen).</p>
+<button id="run">Run all checks</button>
+<button id="copy" disabled>Copy report</button>
+<ul id="out"></ul>
+<pre id="json" hidden></pre>
+<script type="module" src="./probe.js"></script>
+</body>
+</html>

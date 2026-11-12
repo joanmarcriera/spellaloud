@@ -1,0 +1,36 @@
+# Example only (the real deploy is a TrueNAS custom app, see docs/spec.md "Deployment").
+# Host port 30320 is a placeholder from the 303xx range.
+services:
+  spellings:
+    # NOTE: floating tag. A pull can move to a newer 3.13.x alpine; pin a digest (python:3.13-alpine@sha256:...)
+    # once the version is known good (Vikunja #4122). Comment only: behaviour unchanged.
+    image: python:3.13-alpine
+    command: python /app/server.py
+    restart: unless-stopped
+    ports:
+      # Loopback only: the service is reached through the reverse proxy on this host, never straight from the LAN.
+      - "127.0.0.1:30320:8080"
+    environment:
+      SPELLING_DATA_DIR: /data
+      SPELLING_PORT: "8080"
+      # In-container bind must be 0.0.0.0 for the port mapping to work; exposure is limited by the loopback-only
+      # `ports:` entry above and by the shared secret below (the proxy injects it as X-Spelling-Token).
+      SPELLING_BIND: 0.0.0.0
+      # Taken from the deploy environment (never written here); `compose up` fails if it is unset.
+      SPELLING_AUTH_TOKEN: ${SPELLING_AUTH_TOKEN:?set SPELLING_AUTH_TOKEN (the proxy sends it as X-Spelling-Token)}
+      SPELLING_HOME_URL: https://ha.home.example/wall-board/wide?kiosk
+      SPELLING_DEFAULT_KID: finn
+      SPELLING_ALLOWED_HOSTS: ash.home.example,finn.home.example
+      SPELLING_TZ: Europe/London
+      # Feedback button (optional; unset = feedback is queued in sqlite, flush later with --flush-feedback).
+      # Vikunja project 109 "Spellings feedback": https://tracker.example/projects/109
+      # SPELLING_VIKUNJA_URL: https://tracker.example
+      # SPELLING_VIKUNJA_PROJECT_ID: "109"
+      # SPELLING_VIKUNJA_TOKEN: set in the TrueNAS app env, never in this file (tasks:create token only)
+      # SPELLING_TRUST_PROXY: "1"   # behind NPM: rate limit on the last X-Forwarded-For hop
+      # Public trial instead (Hetzner, browser-only build): deploy/Dockerfile + deploy/public.md
+    volumes:
+      - /mnt/BigDisk/applications/spellings/app:/app:ro
+      - /mnt/BigDisk/applications/spellings/data:/data
+      # alpine has no tzdata: share the host's zone files so SPELLING_TZ works
+      - /usr/share/zoneinfo:/usr/share/zoneinfo:ro

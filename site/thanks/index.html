@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- DRAFT thanks page (Vikunja #4119). NOT PUBLISHED. The collector answers a sign-up with 303 to /thanks/?joined=1.
+     First-party only: no third-party scripts, fonts or analytics. The optional price question posts back to the
+     same collector (action is a placeholder until Marc wires the endpoint, see #4118). -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thank you: Spellaloud</title>
+<style>
+  :root { --bg:#fffaf0; --fg:#1d2430; --muted:#566070; --accent:#1f6f5c; --card:#ffffff; --line:#e3dccb }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14181f; --fg:#eef1f5; --muted:#a3adbb; --accent:#6fd1b5; --card:#1c222b; --line:#2c3440 } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif }
+  main { max-width:40rem; margin:0 auto; padding:2rem 1rem 3rem } a { color:var(--accent) }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1.25rem; margin:1.5rem 0 }
+  input[type=email] { width:100%; padding:.8rem; font:inherit; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg) }
+  label.opt { display:block; margin:.4rem 0 }
+  button { margin-top:.6rem; padding:.7rem 1.1rem; font:inherit; border:0; border-radius:8px; background:var(--accent); color:var(--bg); cursor:pointer }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid var(--accent); outline-offset:2px }
+  small { color:var(--muted) } [hidden] { display:none }
+  footer { margin-top:2rem; color:var(--muted); font-size:.9rem }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="h">Thank you</h1>
+  <p id="joined" hidden>You are on the waiting list. You will get one email when the app opens, and nothing else.</p>
+  <p id="plain">If you have just joined the waiting list, thank you. You will get one email when the app opens, and nothing else.</p>
+  <div class="card">
+    <h2>One optional question</h2>
+    <p>If the practice part stays free, what would you think fair for a small optional extra, such as backing up to another phone? Your answer is only for deciding whether to build it. It does not commit you to anything.</p>
+    <!-- action is a placeholder until Marc approves the collector (Vikunja #4118); bin/build-dist refuses to ship it -->
+    <form method="post" action="#TODO-waitlist-endpoint" lang="en-GB">
+      <input type="hidden" name="source" value="waitlist">
+      <label class="opt"><input type="radio" name="price_pref" value="free"> Free is all I need</label>
+      <label class="opt"><input type="radio" name="price_pref" value="once-2.99"> £2.99 once, for backup to another phone</label>
+      <label class="opt"><input type="radio" name="price_pref" value="year-14"> £14 a year</label>
+      <label for="email">Your email again, so the answer goes with your sign-up</label>
+      <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+      <button type="submit">Send my answer</button>
+    </form>
+  </div>
+  <p><a href="/privacy/">Privacy</a>. You can ask us to delete your email address at any time.</p>
+  <footer><nav class="trust" aria-label="About this site"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/help/">Help</a> · <a href="mailto:support@spellaloud.invalid">support@spellaloud.invalid</a></nav></footer>
+</main>
+<script>
+  // Show the "joined" line only when the collector redirected here with ?joined=1. No network, no storage.
+  if (/[?&]joined=1(&|$)/.test(location.search)) {
+    document.getElementById('joined').hidden = false;
+    document.getElementById('plain').hidden = true;
+  }
+</script>
+</body>
+</html>

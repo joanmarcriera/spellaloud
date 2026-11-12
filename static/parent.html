@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en-GB" class="p">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spellaloud - Grown-ups</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="parent">
+  <h1>Spellaloud - Grown-ups</h1>
+  <p class="screenbox"><a class="btn small" href="/">&larr; Back to spellings</a>
+    <button type="button" class="btn small solid" id="tourbtn" hidden>Take the tour</button></p>
+  <section class="panel" id="sharebox" hidden></section>
+  <div id="kids" class="kids">Loading...</div>
+  <section class="panel" id="qrbox" hidden></section>
+  <section class="panel" id="voicebox">
+    <h2>Word voice</h2>
+    <div class="screenbox">
+      <button type="button" class="btn small" id="vrec">Own recordings</button>
+      <button type="button" class="btn small" id="vsyn">British voice</button>
+    </div>
+    <p class="note" id="vnote"></p>
+    <div id="vkids"></div>
+  </section>
+  <section class="panel" id="voice-help">
+    <h2>Get a British voice on this device</h2>
+    <p class="vstatus" id="vstatus" role="status">Checking this device for a British voice…</p>
+    <details id="voice-steps">
+    <summary>How to install one (iPhone, iPad, Android, Windows, Mac, Chromebook)</summary>
+    <p class="note">The app reads words in an English (UK) voice that is installed on the device. Nothing is sent anywhere.
+      Without one, each word needs your child's own recording. Install the voice, then reload this page.</p>
+    <p class="note">The buttons below open the device's own settings. If nothing happens, follow the steps instead.</p>
+    <h3>iPhone and iPad</h3>
+    <p>No link: Apple does not let a web page open Settings.
+      Settings &gt; Accessibility &gt; Spoken Content &gt; Voices &gt; English &gt; English (UK). Pick a voice and tap the download arrow.</p>
+    <h3>Android</h3>
+    <p id="vandroid"><a class="btn small" href="intent:#Intent;action=com.android.settings.TTS_SETTINGS;end">Open text-to-speech settings</a></p>
+    <p>Settings &gt; System &gt; Languages &amp; input &gt; Text-to-speech output. Choose the Google engine, open its settings, then Install voice data &gt; English (United Kingdom).</p>
+    <h3>Windows</h3>
+    <p><a class="btn small" href="ms-settings:speech">Open speech settings</a></p>
+    <p>Settings &gt; Time &amp; language &gt; Language &amp; region &gt; Add a language &gt; English (United Kingdom), with Speech selected. Then Settings &gt; Time &amp; language &gt; Speech &gt; Manage voices &gt; Add voices.</p>
+    <h3>macOS</h3>
+    <p><a class="btn small" href="x-apple.systempreferences:com.apple.preference.universalaccess?SpeakableItems">Open Accessibility settings</a></p>
+    <p>System Settings &gt; Accessibility &gt; Spoken Content &gt; System Voice &gt; Manage Voices &gt; English (United Kingdom), then download one.</p>
+    <h3>ChromeOS</h3>
+    <p>No link: Chrome cannot open its settings from a web page.
+      Settings &gt; Accessibility &gt; Text-to-Speech &gt; Voices. Under English choose English (United Kingdom) and let it download.</p>
+    <h3>Still says there is no British voice?</h3>
+    <p>Some browsers (Chrome on Linux, for example) only offer online voices. The app does not use those, because they send
+      each word to the internet. Use a device from the list above, or record the words in your own voice.</p>
+    </details>
+  </section>
+  <section class="panel" id="backupbox" hidden></section>
+  <section class="panel" id="feedbackbox" hidden></section>
+  <section class="panel" id="screenbox">
+    <h2>This screen</h2>
+    <p id="vp" class="note"></p>
+    <div class="screenbox">
+      <button type="button" class="btn small" id="sm">A&minus;</button>
+      <button type="button" class="btn small" id="s100">100%</button>
+      <button type="button" class="btn small" id="sp">A+</button>
+      <b id="sval"></b>
+    </div>
+    <p class="note">Sets the size of the kid screens on this device. The kid app and this page share a hostname,
+      so set it separately on each hostname (ash.lab&hellip; and finn.lab&hellip;). You can also open a kid URL with
+      <code>?scale=0.8</code>.</p>
+  </section>
+  <section class="panel" id="tipbox" hidden></section>
+  <section class="panel" id="sourcebox">
+    <h2>Open source</h2>
+    <p class="note">Spellaloud is free and open source. Parents who code can read how it works, report a problem or
+      suggest a change on GitHub.</p>
+    <p><a class="btn small" id="sourcelink" href="#" target="_blank" rel="noopener noreferrer">Source code on GitHub</a></p>
+  </section>
+  <div id="printarea" aria-hidden="true"></div>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script type="module" src="/static/parent.js"></script>
+</body>
+</html>

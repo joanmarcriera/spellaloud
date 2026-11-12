@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Build dist/ for the demand-test site (Vikunja #4120). Writes files only; never deploys.
+
+Usage:  bin/build-dist [--src REPO_ROOT] [--out DIST_DIR] [--allow-todo] [--origin URL]   (--base is an alias of --origin)
+Reads:  site/waitlist, site/privacy, site/terms, site/help, site/changelog, site/thanks, and the Y1/Y2 list pages from drafts/lists (via bin/stage-lists rules).
+Writes: dist/index.html (waitlist, source=waitlist), dist/privacy/, dist/terms/, dist/help/, dist/changelog/, dist/thanks/, dist/lists/<slug>/,
+        dist/try/ (the browser-only app from bin/build-local --base /try; list pages link to /try/parent/#sl=...),
+        and static copies dist/m/ dist/e/ dist/r/ of the waitlist whose hidden `source` input is m / e / r, so a
+        sign-up can be attributed without analytics (go-kill tracker, counting rules).
+SEO:    absolute <link rel="canonical"> on every page (attribution copies /m/ /e/ /r/ point at "/"); the list pages' placeholder
+        origin (https://example.invalid from tools/build_list_pages.py) is swapped for --origin in canonical, og:url and JSON-LD.
+        dist/sitemap.xml lists /, /privacy/, /terms/, /help/, /changelog/ and every list slug (not /thanks/, the attribution
+        copies or /try/); dist/robots.txt allows them, disallows /thanks/ and the copies, and names the sitemap.
+        --origin defaults to https://spellaloud.joanmarcriera.es (Vikunja #4342, #4669).
+Gate:   exits 1 (and still prints what it found) if any output contains `#TODO` or an unproposed `[TODO`.
+        Text marked "proposed, Marc to confirm" passes but is counted and listed, so Marc sees what is left to confirm.
+        --allow-todo downgrades the gate to a warning for LOCAL previews only; never use it for a deploy.
+Prints: file count and total bytes. Stdlib only.
+"""
+import argparse, importlib.machinery, importlib.util, pathlib, re, shutil, sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SOURCES = {"m": "m", "e": "e", "r": "r"}
+DEFAULT_ORIGIN = "https://spellaloud.joanmarcriera.es"
+PLACEHOLDER_BASE = "https://example.invalid"    # must equal DEFAULT_BASE in tools/build_list_pages.py
+CANONICAL = re.compile(r'<link rel="canonical" href="([^"]*)">')
+SOURCE_INPUT = re.compile(r'(<input type="hidden" name="source" value=")waitlist(">)')
+
+
+def load_stage_lists():
+    loader = importlib.machinery.SourceFileLoader("stage_lists", str(ROOT / "bin" / "stage-lists"))
+    spec = importlib.util.spec_from_loader("stage_lists", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def load_build_local():
+    loader = importlib.machinery.SourceFileLoader("build_local", str(ROOT / "bin" / "build-local"))
+    spec = importlib.util.spec_from_loader("build_local", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def set_canonical(html: str, origin: str, path: str) -> str:
+    """Make the page's canonical absolute: rewrite an existing one, else insert before </head>."""
+    tag = f'<link rel="canonical" href="{origin}{path}">'
+    if CANONICAL.search(html):
+        return CANONICAL.sub(lambda m: tag, html, count=1)
+    return html.replace("</head>", tag + "\n</head>", 1)
+
+
+def emit_seo_files(out: pathlib.Path, origin: str):
+    """Absolute canonicals, sitemap.xml and robots.txt. Only indexable pages are listed; duplicates and /thanks/ stay out."""
+    lists = out / "lists"
+    slugs = sorted(d.name for d in lists.iterdir() if (d / "index.html").is_file()) if lists.is_dir() else []
+    for slug in slugs:
+        page = lists / slug / "index.html"
+        text = page.read_text(encoding="utf-8")
+        if origin != PLACEHOLDER_BASE:
+            text = text.replace(PLACEHOLDER_BASE, origin)  # canonical, og:url and JSON-LD url
+        page.write_text(set_canonical(text, origin, f"/lists/{slug}/"), encoding="utf-8")
+    for rel, path in (("index.html", "/"), ("privacy/index.html", "/privacy/"), ("terms/index.html", "/terms/"),
+                      ("help/index.html", "/help/"), ("changelog/index.html", "/changelog/"), ("thanks/index.html", "/thanks/"),
+                      *((f"{t}/index.html", "/") for t in SOURCES)):
+        f = out / rel
+        if f.is_file():
+            f.write_text(set_canonical(f.read_text(encoding="utf-8"), origin, path), encoding="utf-8")
+    paths = ["/", "/privacy/", "/terms/", "/help/", "/changelog/"] + [f"/lists/{s}/" for s in slugs]
+    urls = "".join(f"  <url><loc>{origin}{p}</loc></url>\n" for p in paths)
+    (out / "sitemap.xml").write_text(
+        f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n',
+        encoding="utf-8")
+    allow = "".join(f"Allow: {p}\n" for p in paths[1:])
+    disallow = "".join(f"Disallow: /{t}/\n" for t in ("thanks", *SOURCES))
+    (out / "robots.txt").write_text(f"User-agent: *\n{disallow}Allow: /\n{allow}Sitemap: {origin}/sitemap.xml\n", encoding="utf-8")
+
+
+def build(src: pathlib.Path, out: pathlib.Path, origin: str = DEFAULT_ORIGIN):
+    if out.exists():
+        shutil.rmtree(out)
+    site = src / "site"
+    waitlist = (site / "waitlist" / "index.html").read_text(encoding="utf-8")
+    pages = {"index.html": waitlist}
+    for name in ("privacy", "terms", "help", "changelog", "thanks"):
+        pages[f"{name}/index.html"] = (site / name / "index.html").read_text(encoding="utf-8")
+    for tag in SOURCES:
+        if not SOURCE_INPUT.search(waitlist):
+            sys.exit('build-dist: site/waitlist has no hidden source input (value="waitlist")')
+        pages[f"{tag}/index.html"] = SOURCE_INPUT.sub(rf"\g<1>{tag}\g<2>", waitlist)
+    for rel, text in pages.items():
+        (out / rel).parent.mkdir(parents=True, exist_ok=True)
+        (out / rel).write_text(text, encoding="utf-8")
+    # The preloaded browser build served under /try/ (Vikunja #4633): list pages link to /try/parent/#sl=...
+    if (src / "static" / "sw.js").is_file():
+        load_build_local().build(src, out / "try", None, "/try")
+    else:
+        print("build-dist: no static/, skipping the /try/ build", file=sys.stderr)
+    lists = src / "drafts" / "lists"
+    if lists.is_dir():
+        load_stage_lists().stage(lists, out / "lists")
+    else:
+        print("build-dist: no drafts/lists, skipping list pages", file=sys.stderr)
+    emit_seo_files(out, origin.rstrip("/"))
+
+
+def scan(out: pathlib.Path):
+    """Return (todo_hits, proposed_hits) as lists of 'path: text'."""
+    todo, proposed = [], []
+    for f in sorted(p for p in out.rglob("*") if p.is_file()):
+        text = f.read_text(encoding="utf-8", errors="replace")
+        rel = f.relative_to(out)
+        todo += [f"{rel}: {m}" for m in re.findall(r"#TODO[\w-]*|\[TODO[^\]]{0,40}", text)]
+        proposed += [f"{rel}" for _ in re.findall(r"proposed, Marc to confirm", text, flags=re.I)]
+    return todo, proposed
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--src", default=str(ROOT))
+    ap.add_argument("--out", default=None, help="default: <src>/dist")
+    ap.add_argument("--origin", "--base", dest="origin", default=DEFAULT_ORIGIN, help="public origin for canonicals, robots.txt and the sitemap")
+    ap.add_argument("--allow-todo", action="store_true")
+    a = ap.parse_args()
+    src = pathlib.Path(a.src).resolve()
+    out = pathlib.Path(a.out).resolve() if a.out else src / "dist"
+    try:
+        build(src, out, a.origin)
+    except FileNotFoundError as e:
+        sys.exit(f"build-dist: missing input: {e}")
+    files = [p for p in out.rglob("*") if p.is_file()]
+    print(f"build-dist: {len(files)} files, {sum(p.stat().st_size for p in files)} bytes in {out}")
+    for p in sorted(files):
+        print("  " + str(p.relative_to(out)))
+    todo, proposed = scan(out)
+    if proposed:
+        print(f"build-dist: {len(proposed)} 'proposed, Marc to confirm' markers remain ({', '.join(sorted(set(proposed)))})")
+    if todo:
+        print(f"build-dist: {len(todo)} unresolved TODO markers:", file=sys.stderr)
+        for t in todo:
+            print("  " + t, file=sys.stderr)
+        if not a.allow_todo:
+            sys.exit(1)
+        print("build-dist: --allow-todo given, local preview only", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

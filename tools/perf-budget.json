@@ -1,0 +1,31 @@
+{
+  "gzip_bytes": {
+    "app.js": 18000,
+    "calendar-katherine-semar.js": 1550,
+    "backup.js": 2990,
+    "bulk.js": 950,
+    "durability.js": 1777,
+    "feedback.js": 2713,
+    "kidsetup.js": 1428,
+    "lib.js": 4500,
+    "licence.js": 3546,
+    "onecard.js": 1229,
+    "pack.js": 5832,
+    "parent.js": 14000,
+    "printsheet.js": 926,
+    "qr.js": 4189,
+    "sample.js": 1165,
+    "share.js": 1487,
+    "store.js": 12174,
+    "sw.js": 1030,
+    "terms.js": 2100,
+    "transport.js": 1897,
+    "typemode.js": 1128,
+    "voice.js": 5050,
+    "style.css": 5500,
+    "index.html": 426,
+    "tour.js": 9800
+  },
+  "gzip_total_bytes": 102000,
+  "start_seconds": 1.5
+}

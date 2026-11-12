@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""Release smoke test for the staged/live demand-test site (Vikunja #4120). Read-only except one optional test POST.
+
+Usage:  bin/smoke BASE_URL [--post COLLECTOR_URL]
+        bin/smoke http://127.0.0.1:8765          # after: bin/build-dist --allow-todo && (cd dist && python3 -m http.server 8765)
+Checks: GET returns 200 and contains a marker for /, /privacy/, /terms/, /help/, /changelog/, /thanks/, /m/, /e/, /r/, the Y2 list page
+        (hear-it), the /try/ app + its service worker, /robots.txt and /sitemap.xml (#4951). Then every site HTML page served (the pages above,
+        except /try/, plus every page the sitemap names) must contain a mailto: link and no TODO text; the two known endpoint placeholders
+        (#TODO-waitlist-endpoint, only present in --allow-todo previews) are ignored.
+        With --post, sends ONE sign-up for test+smoke@example.invalid (source=waitlist) and expects 303.
+Exit 0 when every check passes, 1 otherwise. Prints one line per check. Stdlib only.
+"""
+import argparse, http.client, re, sys, urllib.parse
+
+CHECKS = [
+    ("/", "Join the waiting list"),
+    ("/privacy/", "Privacy, in plain English"),
+    ("/terms/", 'id="refund"'),
+    ("/help/", 'id="lost-words"'),
+    ("/changelog/", "Last updated"),
+    ("/thanks/", "Thank you"),
+    ("/m/", 'name="source" value="m"'),
+    ("/e/", 'name="source" value="e"'),
+    ("/r/", 'name="source" value="r"'),
+    ("/lists/year-2-common-exception-words/", "hear-it"),
+    ("/try/", "Spellings"),
+    ("/try/sw.js", "spellings-shell-"),
+    ("/robots.txt", "Sitemap:"),
+    ("/sitemap.xml", "<urlset"),
+]
+NON_HTML = ("/robots.txt", "/sitemap.xml", "/try/", "/try/sw.js")   # not site pages: no mailto: / TODO check (the app is its own thing)
+ENDPOINT_PLACEHOLDER = "#TODO-waitlist-endpoint"   # the collector action Marc wires before a real deploy (build-dist gate)
+
+
+def request(method, url, body=None):
+    u = urllib.parse.urlparse(url)
+    cls = http.client.HTTPSConnection if u.scheme == "https" else http.client.HTTPConnection
+    c = cls(u.hostname, u.port, timeout=10)             # http.client never follows redirects
+    headers = {"Content-Type": "application/x-www-form-urlencoded"} if body else {}
+    c.request(method, (u.path or "/") + (f"?{u.query}" if u.query else ""), body, headers)
+    r = c.getresponse()
+    return r.status, r.read().decode("utf-8", "replace")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("base")
+    ap.add_argument("--post")
+    a = ap.parse_args()
+    base = a.base.rstrip("/")
+    bad = 0
+    pages = {}                                  # path -> body of every HTML page fetched
+    sitemap = ""
+    for path, marker in CHECKS:
+        try:
+            status, text = request("GET", base + path)
+        except OSError as e:
+            status, text = 0, str(e)
+        ok = status == 200 and marker in text
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} GET {path} -> {status} marker {marker!r}")
+        if path == "/sitemap.xml":
+            sitemap = text
+        if ok and path not in NON_HTML:
+            pages[path] = text
+    for loc in re.findall(r"<loc>([^<]+)</loc>", sitemap):      # pages only the sitemap names (the other list pages)
+        path = urllib.parse.urlparse(loc).path or "/"
+        if path in pages:
+            continue
+        try:
+            status, text = request("GET", base + path)
+        except OSError as e:
+            status, text = 0, str(e)
+        ok = status == 200
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} GET {path} -> {status} (listed in sitemap.xml)")
+        if ok:
+            pages[path] = text
+    for path, text in sorted(pages.items()):
+        ok = "mailto:" in text
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} MAILTO {path} contains a mailto: link")
+        left = re.findall(r".{0,30}TODO.{0,30}", text.replace(ENDPOINT_PLACEHOLDER, ""))
+        ok = not left
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} NO-TODO {path}" + ("" if ok else f" found {left[0]!r}"))
+    if a.post:
+        body = urllib.parse.urlencode({"email": "test+smoke@example.invalid", "source": "waitlist"})
+        try:
+            status, _ = request("POST", a.post, body)
+        except OSError:
+            status = 0
+        ok = status == 303
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} POST {a.post} -> {status} (want 303)")
+    sys.exit(1 if bad else 0)
+
+
+if __name__ == "__main__":
+    main()

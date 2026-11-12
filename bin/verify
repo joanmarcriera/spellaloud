@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""One command for the green check (Vikunja #5602): is the repo releasable?
+
+Usage:  bin/verify [--list] [--only STEP[,STEP...]]
+Steps (in order): node-tests, python-tests, build-dist, smoke
+  node-tests    node --test tests/*.mjs
+  python-tests  python3 -m unittest discover -s tests
+  build-dist    bin/build-dist --allow-todo --out <tmpdir>   (local preview build; never deploys)
+  smoke         bin/smoke against http.server on 127.0.0.1:<free port> serving that build (GET only, no --post)
+Prints one PASS/FAIL line per step and a final VERIFY line; exit 0 only if every step passed. A failing step does
+not stop the later ones. The http.server is always killed (try/finally). Nothing leaves 127.0.0.1.
+--list         print the steps and exit 0 without running anything.
+--only         run just the named steps (used by tests/verify.test.mjs to avoid recursing into itself).
+Env VERIFY_FORCE_FAIL=<step>  makes that step report FAIL without running it (tests only).
+Stdlib only.
+"""
+import argparse, os, pathlib, socket, subprocess, sys, tempfile, time
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+STEPS = ["node-tests", "python-tests", "build-dist", "smoke"]
+DESC = {
+    "node-tests": "node --test tests/*.mjs",
+    "python-tests": "python3 -m unittest discover -s tests",
+    "build-dist": "bin/build-dist --allow-todo --out <tmpdir>",
+    "smoke": "bin/smoke http://127.0.0.1:<free port>",
+}
+
+
+def run(cmd, **kw):
+    """Run cmd in the repo root, return (exit code, combined output tail)."""
+    p = subprocess.run(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **kw)
+    return p.returncode, p.stdout
+
+
+def free_port():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--list", action="store_true")
+    ap.add_argument("--only", default="")
+    a = ap.parse_args()
+    if a.list:
+        for s in STEPS:
+            print(f"{s}: {DESC[s]}")
+        return 0
+    chosen = [s for s in a.only.split(",") if s] or STEPS
+    unknown = [s for s in chosen if s not in STEPS]
+    if unknown:
+        print(f"unknown step(s): {', '.join(unknown)}", file=sys.stderr)
+        return 2
+    force = os.environ.get("VERIFY_FORCE_FAIL", "")
+    results = {}
+    tmp = tempfile.TemporaryDirectory(prefix="verify-dist-")
+    dist = pathlib.Path(tmp.name) / "dist"
+    server = None
+    try:
+        for s in chosen:
+            detail = ""
+            if s == force:
+                rc, out = 1, "forced failure (VERIFY_FORCE_FAIL)"
+            elif s == "node-tests":
+                rc, out = run(["node", "--test", *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests").glob("*.mjs"))])
+            elif s == "python-tests":
+                rc, out = run([sys.executable, "-m", "unittest", "discover", "-s", "tests"])
+            elif s == "build-dist":
+                rc, out = run([sys.executable, "bin/build-dist", "--allow-todo", "--out", str(dist)])
+            else:  # smoke
+                if not dist.exists():
+                    rc, out = 1, "no dist build to serve (build-dist did not run or failed)"
+                else:
+                    port = free_port()
+                    server = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
+                                               "--directory", str(dist)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    for _ in range(50):                      # wait up to 5 s for the listener
+                        try:
+                            socket.create_connection(("127.0.0.1", port), 0.1).close()
+                            break
+                        except OSError:
+                            time.sleep(0.1)
+                    rc, out = run([sys.executable, "bin/smoke", f"http://127.0.0.1:{port}"])
+                    detail = f" (port {port})"
+                    server.terminate(); server.wait(5); server = None
+            results[s] = rc == 0
+            print(f"{'PASS' if rc == 0 else 'FAIL'} {s}{detail}")
+            if rc != 0:
+                print("\n".join("    " + l for l in out.strip().splitlines()[-15:]))
+    finally:
+        if server is not None:
+            server.kill(); server.wait()
+        tmp.cleanup()
+    ok = all(results.values())
+    print(f"VERIFY {'PASS' if ok else 'FAIL'}: {sum(results.values())}/{len(results)} steps")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

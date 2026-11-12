@@ -1,0 +1,14 @@
+{
+  "name": "Spellings",
+  "short_name": "Spellings",
+  "description": "Weekly spelling dictation practice, stored on this device.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2b7de9",
+  "lang": "en-GB",
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""Build dist-local/ : the browser-only (IndexedDB) PWA, as static files. Writes files only; never deploys (Vikunja #3532).
+
+Usage:  bin/build-local [--src REPO_ROOT] [--out DIR] [--version STRING] [--base /PATH]
+        --base serves the build from a sub-path (bin/build-dist uses --base /try): root-absolute references are
+        prefixed and the service worker scope follows. Default: no base (served from the site root).
+Reads:  static/*.js|css|html|svg|webmanifest (not sw.js, not server-only assets).
+Writes: DIR/index.html          kid app, <html data-store="local"> so transport.js uses IndexedDB
+        DIR/parent/index.html   parent page, same stamp (served at /parent)
+        DIR/static/...          the modules, css, icon, manifest
+        DIR/sw.js               service worker with __VERSION__/__PRECACHE__ filled in (offline shell)
+Version defaults to a short hash of the shipped files, so any change replaces the cached shell.
+Prints: file count and bytes. Stdlib only.
+"""
+import argparse, hashlib, json, pathlib, re, shutil, sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SHIPPED = (".js", ".css", ".svg", ".webmanifest")
+MANIFEST_LINK = '<link rel="manifest" href="/static/manifest.webmanifest">\n<meta name="theme-color" content="#2b7de9">\n'
+
+
+# (pattern, replacement) pairs that move root-absolute references under BASE. Each must match at least once
+# somewhere in the build, so a code change that moves a literal fails loudly instead of shipping a broken /try/.
+# \x60 is a backtick (JS template literals).
+REBASE = [
+    (re.compile(r"""(["'\x60])/static/"""), r"\1{b}/static/"),
+    (re.compile(r"""(["'\x60])/parent\b"""), r"\1{b}/parent"),
+    (re.compile(r"""(["'\x60])/\?(kid|who)="""), r"\1{b}/?\2="),
+    (re.compile(r"""register\('/sw\.js'\)"""), "register('{b}/sw.js')"),
+    (re.compile(r"""href="/">"""), 'href="{b}/">'),
+    (re.compile(r"""\$\{location\.origin\}/parent"""), "${{location.origin}}{b}/parent"),
+    (re.compile(r'''"(start_url|scope)": "/"'''), r'"\1": "{b}/"'),
+]
+
+
+def rebase(files: dict, base: str):
+    """Prefix root-absolute references in the text files of the build with `base` (e.g. '/try')."""
+    hit = [0] * len(REBASE)
+    for name, data in list(files.items()):
+        if not name.endswith((".js", ".html", ".webmanifest")):
+            continue
+        text = data.decode("utf-8")
+        for i, (pat, rep) in enumerate(REBASE):
+            text, n = pat.subn(lambda m, rep=rep: m.expand(rep.replace("{{", "\0").replace("}}", "\1").replace("{b}", base).replace("\0", "{").replace("\1", "}")), text)
+            hit[i] += n
+        files[name] = text.encode("utf-8")
+    dead = [REBASE[i][0].pattern for i, n in enumerate(hit) if n == 0]
+    if dead:
+        sys.exit("build-local: --base rewrite found nothing for: " + "; ".join(dead))
+
+
+def stamp(html: str) -> str:
+    """Add data-store="local" to <html> and the manifest link to <head>; fail loudly if the markup moved."""
+    out, n = re.subn(r"<html\b", '<html data-store="local"', html, count=1)
+    out, m = re.subn(r"</title>\n", "</title>\n" + MANIFEST_LINK, out, count=1)
+    if not (n and m):
+        sys.exit("build-local: page lacks <html> or a </title> line to stamp")
+    return out
+
+
+def build(src: pathlib.Path, out: pathlib.Path, version: str | None, base: str = ""):
+    static = src / "static"
+    if out.exists():
+        shutil.rmtree(out)
+    files = {}
+    for p in sorted(static.iterdir()):
+        if p.is_file() and p.suffix in SHIPPED and p.name != "sw.js":
+            files[f"static/{p.name}"] = p.read_bytes()
+    pages = {"index.html": stamp((static / "index.html").read_text("utf-8")),
+             "parent/index.html": stamp((static / "parent.html").read_text("utf-8"))}
+    for rel, text in pages.items():
+        files[rel] = text.encode("utf-8")
+    if base:
+        rebase(files, base)
+    version = version or hashlib.sha256(b"".join(k.encode() + v for k, v in sorted(files.items()))).hexdigest()[:12]
+    precache = [base + "/", base + "/parent/"] + sorted(base + "/" + k for k in files if k.endswith((".js", ".css", ".svg", ".webmanifest")))
+    sw = (static / "sw.js").read_text("utf-8").replace("__VERSION__", version).replace("__BASE__", base).replace("__PRECACHE__", json.dumps(precache, indent=2))
+    files["sw.js"] = sw.encode("utf-8")
+    for rel, data in files.items():
+        (out / rel).parent.mkdir(parents=True, exist_ok=True)
+        (out / rel).write_bytes(data)
+    return version, precache
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--src", default=str(ROOT))
+    ap.add_argument("--out", default=None, help="default: <src>/dist-local")
+    ap.add_argument("--version", default=None)
+    ap.add_argument("--base", default="", help="serve from this sub-path, e.g. /try")
+    a = ap.parse_args()
+    if a.base and not re.fullmatch(r"/[a-z0-9-]+(/[a-z0-9-]+)*", a.base):
+        sys.exit("build-local: --base must look like /try")
+    src = pathlib.Path(a.src).resolve()
+    out = pathlib.Path(a.out).resolve() if a.out else src / "dist-local"
+    version, precache = build(src, out, a.version, a.base)
+    files = [p for p in out.rglob("*") if p.is_file()]
+    print(f"build-local: {len(files)} files, {sum(p.stat().st_size for p in files)} bytes in {out}, version {version}, {len(precache)} precached")
+
+
+if __name__ == "__main__":
+    main()

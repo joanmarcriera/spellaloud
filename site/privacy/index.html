@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- DRAFT privacy page (Vikunja #3542). NOT PUBLISHED. Needs Marc's review of the controller name/contact line
+     before going live. Plain English on purpose: readable by non-native English speakers. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy: Spellaloud</title>
+<style>
+  :root { --bg:#fffaf0; --fg:#1d2430; --muted:#566070; --accent:#1f6f5c }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14181f; --fg:#eef1f5; --muted:#a3adbb; --accent:#6fd1b5 } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif }
+  main { max-width:40rem; margin:0 auto; padding:2rem 1rem 3rem } a { color:var(--accent) } h2 { margin-top:2rem }
+  footer { margin-top:2rem; color:var(--muted); font-size:.9rem }
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy, in plain English</h1>
+  <p><em>Draft, last updated 2026-11-03.</em></p>
+  <h2>The short version</h2>
+  <ul>
+    <li>The app keeps your child's words, recordings and scores <strong>only on your own device</strong>. We never receive them.</li>
+    <li>There are <strong>no ads, no analytics, no trackers and no accounts</strong>, anywhere.</li>
+    <li>We collect one thing: if you join the waiting list, your <strong>email address</strong>.</li>
+  </ul>
+  <h2>What we collect, and why</h2>
+  <p>Waiting list: your email address, so we can tell you once when the app opens. We keep it until then, and delete the list afterwards unless you asked to stay informed. We do not sell it or share it.</p>
+  <p>Optional price question: on the thank-you page you may pick one of three answers about what you would think fair to pay (free, £2.99 once, or £14 a year). If you answer, we store that one choice (the <em>price preference</em>) with your email address, only to decide whether a paid extra is worth building. It is optional, it commits you to nothing, and it is deleted with your email address. <em>(Proposed, Marc to confirm.)</em></p>
+  <p>The app itself: nothing leaves your device. The microphone is used only if you choose to record your own voice. Recordings stay on the device.</p>
+  <p>The website is served by our own server. Like any web server it keeps short technical logs (IP address, time, page) for security, which are deleted automatically after a short period. <em>(Proposed, Marc to confirm: access logs are kept for 14 days and then deleted. Check the real rotation on the host first.)</em></p>
+  <p>Backups of our server are overwritten on a rolling schedule, so a deleted email address can remain in a backup for up to 30 days. <em>(Proposed, Marc to confirm.)</em></p>
+  <h2>If you buy the full version: your licence key</h2>
+  <!-- DRAFT WORDING for legal review (Vikunja #5546). Not published; Marc approves. Facts it states (static/licence.js):
+       key + LS instance id + last-check date are stored in this device's own storage (localStorage); the key is sent only
+       to api.lemonsqueezy.com (activate once, then re-check at most every 14 days); never logged; clearing site data removes it.
+       Lemon Squeezy is Merchant of Record for the purchase itself: confirm its role/wording and the lawful basis with legal. -->
+  <p>Payment is handled by our payment provider, Lemon Squeezy, which sells the app to you and handles your payment details and tax. We never see your card number. They send you a licence key by email.</p>
+  <p>When you type the key into the app, the app checks it with Lemon Squeezy, and sends them the key and a device name. If it is valid, the app saves the key on your own device so it can unlock without internet. About every 14 days, when you are online, the app checks again that the key is still valid, for example that it was not refunded. The key is sent only to Lemon Squeezy, never to us or anyone else, and is never written to any log.</p>
+  <p>To remove the key from a device, clear the site data for this app in your browser or phone settings. That does not cancel your purchase; you can enter the key again.</p>
+  <h2>Backup files and sharing lists</h2>
+  <p>If you export a backup file, it is created on your device and you decide where it goes (Files, WhatsApp, email). We never see it. A shared word list contains only the words, never a child's recordings or scores. The list is stored in the link itself, not on our server.</p>
+  <h2>Your rights</h2>
+  <p>You can ask to see or delete your email address at any time. We will delete it within 7 days of your request <em>(proposed, Marc to confirm)</em>, and usually much sooner. Contact: <em><a href="mailto:support@spellaloud.invalid">support@spellaloud.invalid</a> <em>(proposed, Marc to confirm: a dedicated mailbox on the site's own domain; this address is a placeholder).</em> You can also complain to the Information Commissioner's Office (ico.org.uk).</p>
+  <h2>Children</h2>
+  <p>The app is used by children but run by a parent, and it holds no personal data about them on our side. We follow the ICO's Age Appropriate Design Code (the Children's Code). Our self-assessment is public in the project repository.</p>
+  <h2>Who is responsible</h2>
+  <p>The data controller is the individual who runs this site. <em>(Proposed, Marc to confirm: your full name as an individual, or the business name if you register one, plus the ICO registration number if the fee applies. See https://tracker.example/tasks/3542.)</em></p>
+  <footer><nav class="trust" aria-label="About this site"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/help/">Help</a> · <a href="mailto:support@spellaloud.invalid">support@spellaloud.invalid</a></nav></footer>
+</main>
+</body>
+</html>

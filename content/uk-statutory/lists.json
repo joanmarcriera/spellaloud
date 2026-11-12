@@ -1,0 +1,1927 @@
+{
+ "schema": 1,
+ "source": {
+  "title": "The national curriculum in England - English Appendix 1: Spelling",
+  "publisher": "Department for Education",
+  "published": "2013-09",
+  "landing_page": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study",
+  "url": "https://assets.publishing.service.gov.uk/media/5a7ccc06ed915d63cc65ce61/English_Appendix_1_-_Spelling.pdf",
+  "retrieved": "2026-10-23",
+  "licence": "Open Government Licence v3.0",
+  "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+  "attribution": "Contains public sector information licensed under the Open Government Licence v3.0. (c) Crown copyright 2013. Not affiliated with or endorsed by the Department for Education."
+ },
+ "lists": [
+  {
+   "id": "y1-common-exception-words",
+   "title": "Year 1 common exception words",
+   "years": [
+    1
+   ],
+   "statutory": false,
+   "note": "Printed as non-statutory example words, 'and/or others according to the programme used'.",
+   "entries": [
+    {
+     "official": "the",
+     "forms": [
+      "the"
+     ]
+    },
+    {
+     "official": "a",
+     "forms": [
+      "a"
+     ]
+    },
+    {
+     "official": "do",
+     "forms": [
+      "do"
+     ]
+    },
+    {
+     "official": "to",
+     "forms": [
+      "to"
+     ]
+    },
+    {
+     "official": "today",
+     "forms": [
+      "today"
+     ]
+    },
+    {
+     "official": "of",
+     "forms": [
+      "of"
+     ]
+    },
+    {
+     "official": "said",
+     "forms": [
+      "said"
+     ]
+    },
+    {
+     "official": "says",
+     "forms": [
+      "says"
+     ]
+    },
+    {
+     "official": "are",
+     "forms": [
+      "are"
+     ]
+    },
+    {
+     "official": "were",
+     "forms": [
+      "were"
+     ]
+    },
+    {
+     "official": "was",
+     "forms": [
+      "was"
+     ]
+    },
+    {
+     "official": "is",
+     "forms": [
+      "is"
+     ]
+    },
+    {
+     "official": "his",
+     "forms": [
+      "his"
+     ]
+    },
+    {
+     "official": "has",
+     "forms": [
+      "has"
+     ]
+    },
+    {
+     "official": "I",
+     "forms": [
+      "I"
+     ]
+    },
+    {
+     "official": "you",
+     "forms": [
+      "you"
+     ]
+    },
+    {
+     "official": "your",
+     "forms": [
+      "your"
+     ]
+    },
+    {
+     "official": "they",
+     "forms": [
+      "they"
+     ]
+    },
+    {
+     "official": "be",
+     "forms": [
+      "be"
+     ]
+    },
+    {
+     "official": "he",
+     "forms": [
+      "he"
+     ]
+    },
+    {
+     "official": "me",
+     "forms": [
+      "me"
+     ]
+    },
+    {
+     "official": "she",
+     "forms": [
+      "she"
+     ]
+    },
+    {
+     "official": "we",
+     "forms": [
+      "we"
+     ]
+    },
+    {
+     "official": "no",
+     "forms": [
+      "no"
+     ]
+    },
+    {
+     "official": "go",
+     "forms": [
+      "go"
+     ]
+    },
+    {
+     "official": "so",
+     "forms": [
+      "so"
+     ]
+    },
+    {
+     "official": "by",
+     "forms": [
+      "by"
+     ]
+    },
+    {
+     "official": "my",
+     "forms": [
+      "my"
+     ]
+    },
+    {
+     "official": "here",
+     "forms": [
+      "here"
+     ]
+    },
+    {
+     "official": "there",
+     "forms": [
+      "there"
+     ]
+    },
+    {
+     "official": "where",
+     "forms": [
+      "where"
+     ]
+    },
+    {
+     "official": "love",
+     "forms": [
+      "love"
+     ]
+    },
+    {
+     "official": "come",
+     "forms": [
+      "come"
+     ]
+    },
+    {
+     "official": "some",
+     "forms": [
+      "some"
+     ]
+    },
+    {
+     "official": "one",
+     "forms": [
+      "one"
+     ]
+    },
+    {
+     "official": "once",
+     "forms": [
+      "once"
+     ]
+    },
+    {
+     "official": "ask",
+     "forms": [
+      "ask"
+     ]
+    },
+    {
+     "official": "friend",
+     "forms": [
+      "friend"
+     ]
+    },
+    {
+     "official": "school",
+     "forms": [
+      "school"
+     ]
+    },
+    {
+     "official": "put",
+     "forms": [
+      "put"
+     ]
+    },
+    {
+     "official": "push",
+     "forms": [
+      "push"
+     ]
+    },
+    {
+     "official": "pull",
+     "forms": [
+      "pull"
+     ]
+    },
+    {
+     "official": "full",
+     "forms": [
+      "full"
+     ]
+    },
+    {
+     "official": "house",
+     "forms": [
+      "house"
+     ]
+    },
+    {
+     "official": "our",
+     "forms": [
+      "our"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "y2-common-exception-words",
+   "title": "Year 2 common exception words",
+   "years": [
+    2
+   ],
+   "statutory": false,
+   "note": "Printed as non-statutory example words, 'and/or others according to programme used'. 'children' is included because of its relationship with 'child'.",
+   "entries": [
+    {
+     "official": "door",
+     "forms": [
+      "door"
+     ]
+    },
+    {
+     "official": "floor",
+     "forms": [
+      "floor"
+     ]
+    },
+    {
+     "official": "poor",
+     "forms": [
+      "poor"
+     ]
+    },
+    {
+     "official": "because",
+     "forms": [
+      "because"
+     ]
+    },
+    {
+     "official": "find",
+     "forms": [
+      "find"
+     ]
+    },
+    {
+     "official": "kind",
+     "forms": [
+      "kind"
+     ]
+    },
+    {
+     "official": "mind",
+     "forms": [
+      "mind"
+     ]
+    },
+    {
+     "official": "behind",
+     "forms": [
+      "behind"
+     ]
+    },
+    {
+     "official": "child",
+     "forms": [
+      "child"
+     ]
+    },
+    {
+     "official": "children",
+     "forms": [
+      "children"
+     ]
+    },
+    {
+     "official": "wild",
+     "forms": [
+      "wild"
+     ]
+    },
+    {
+     "official": "climb",
+     "forms": [
+      "climb"
+     ]
+    },
+    {
+     "official": "most",
+     "forms": [
+      "most"
+     ]
+    },
+    {
+     "official": "only",
+     "forms": [
+      "only"
+     ]
+    },
+    {
+     "official": "both",
+     "forms": [
+      "both"
+     ]
+    },
+    {
+     "official": "old",
+     "forms": [
+      "old"
+     ]
+    },
+    {
+     "official": "cold",
+     "forms": [
+      "cold"
+     ]
+    },
+    {
+     "official": "gold",
+     "forms": [
+      "gold"
+     ]
+    },
+    {
+     "official": "hold",
+     "forms": [
+      "hold"
+     ]
+    },
+    {
+     "official": "told",
+     "forms": [
+      "told"
+     ]
+    },
+    {
+     "official": "every",
+     "forms": [
+      "every"
+     ]
+    },
+    {
+     "official": "everybody",
+     "forms": [
+      "everybody"
+     ]
+    },
+    {
+     "official": "even",
+     "forms": [
+      "even"
+     ]
+    },
+    {
+     "official": "great",
+     "forms": [
+      "great"
+     ]
+    },
+    {
+     "official": "break",
+     "forms": [
+      "break"
+     ]
+    },
+    {
+     "official": "steak",
+     "forms": [
+      "steak"
+     ]
+    },
+    {
+     "official": "pretty",
+     "forms": [
+      "pretty"
+     ]
+    },
+    {
+     "official": "beautiful",
+     "forms": [
+      "beautiful"
+     ]
+    },
+    {
+     "official": "after",
+     "forms": [
+      "after"
+     ]
+    },
+    {
+     "official": "fast",
+     "forms": [
+      "fast"
+     ]
+    },
+    {
+     "official": "last",
+     "forms": [
+      "last"
+     ]
+    },
+    {
+     "official": "past",
+     "forms": [
+      "past"
+     ]
+    },
+    {
+     "official": "father",
+     "forms": [
+      "father"
+     ]
+    },
+    {
+     "official": "class",
+     "forms": [
+      "class"
+     ]
+    },
+    {
+     "official": "grass",
+     "forms": [
+      "grass"
+     ]
+    },
+    {
+     "official": "pass",
+     "forms": [
+      "pass"
+     ]
+    },
+    {
+     "official": "plant",
+     "forms": [
+      "plant"
+     ]
+    },
+    {
+     "official": "path",
+     "forms": [
+      "path"
+     ]
+    },
+    {
+     "official": "bath",
+     "forms": [
+      "bath"
+     ]
+    },
+    {
+     "official": "hour",
+     "forms": [
+      "hour"
+     ]
+    },
+    {
+     "official": "move",
+     "forms": [
+      "move"
+     ]
+    },
+    {
+     "official": "prove",
+     "forms": [
+      "prove"
+     ]
+    },
+    {
+     "official": "improve",
+     "forms": [
+      "improve"
+     ]
+    },
+    {
+     "official": "sure",
+     "forms": [
+      "sure"
+     ]
+    },
+    {
+     "official": "sugar",
+     "forms": [
+      "sugar"
+     ]
+    },
+    {
+     "official": "eye",
+     "forms": [
+      "eye"
+     ]
+    },
+    {
+     "official": "could",
+     "forms": [
+      "could"
+     ]
+    },
+    {
+     "official": "should",
+     "forms": [
+      "should"
+     ]
+    },
+    {
+     "official": "would",
+     "forms": [
+      "would"
+     ]
+    },
+    {
+     "official": "who",
+     "forms": [
+      "who"
+     ]
+    },
+    {
+     "official": "whole",
+     "forms": [
+      "whole"
+     ]
+    },
+    {
+     "official": "any",
+     "forms": [
+      "any"
+     ]
+    },
+    {
+     "official": "many",
+     "forms": [
+      "many"
+     ]
+    },
+    {
+     "official": "clothes",
+     "forms": [
+      "clothes"
+     ]
+    },
+    {
+     "official": "busy",
+     "forms": [
+      "busy"
+     ]
+    },
+    {
+     "official": "people",
+     "forms": [
+      "people"
+     ]
+    },
+    {
+     "official": "water",
+     "forms": [
+      "water"
+     ]
+    },
+    {
+     "official": "again",
+     "forms": [
+      "again"
+     ]
+    },
+    {
+     "official": "half",
+     "forms": [
+      "half"
+     ]
+    },
+    {
+     "official": "money",
+     "forms": [
+      "money"
+     ]
+    },
+    {
+     "official": "Mr",
+     "forms": [
+      "Mr"
+     ]
+    },
+    {
+     "official": "Mrs",
+     "forms": [
+      "Mrs"
+     ]
+    },
+    {
+     "official": "parents",
+     "forms": [
+      "parents"
+     ]
+    },
+    {
+     "official": "Christmas",
+     "forms": [
+      "Christmas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "y3-4-word-list",
+   "title": "Years 3 and 4 word list",
+   "years": [
+    3,
+    4
+   ],
+   "statutory": true,
+   "entries": [
+    {
+     "official": "accident(ally)",
+     "forms": [
+      "accident",
+      "accidentally"
+     ]
+    },
+    {
+     "official": "actual(ly)",
+     "forms": [
+      "actual",
+      "actually"
+     ]
+    },
+    {
+     "official": "address",
+     "forms": [
+      "address"
+     ]
+    },
+    {
+     "official": "answer",
+     "forms": [
+      "answer"
+     ]
+    },
+    {
+     "official": "appear",
+     "forms": [
+      "appear"
+     ]
+    },
+    {
+     "official": "arrive",
+     "forms": [
+      "arrive"
+     ]
+    },
+    {
+     "official": "believe",
+     "forms": [
+      "believe"
+     ]
+    },
+    {
+     "official": "bicycle",
+     "forms": [
+      "bicycle"
+     ]
+    },
+    {
+     "official": "breath",
+     "forms": [
+      "breath"
+     ]
+    },
+    {
+     "official": "breathe",
+     "forms": [
+      "breathe"
+     ]
+    },
+    {
+     "official": "build",
+     "forms": [
+      "build"
+     ]
+    },
+    {
+     "official": "busy/business",
+     "forms": [
+      "busy",
+      "business"
+     ]
+    },
+    {
+     "official": "calendar",
+     "forms": [
+      "calendar"
+     ]
+    },
+    {
+     "official": "caught",
+     "forms": [
+      "caught"
+     ]
+    },
+    {
+     "official": "centre",
+     "forms": [
+      "centre"
+     ]
+    },
+    {
+     "official": "century",
+     "forms": [
+      "century"
+     ]
+    },
+    {
+     "official": "certain",
+     "forms": [
+      "certain"
+     ]
+    },
+    {
+     "official": "circle",
+     "forms": [
+      "circle"
+     ]
+    },
+    {
+     "official": "complete",
+     "forms": [
+      "complete"
+     ]
+    },
+    {
+     "official": "consider",
+     "forms": [
+      "consider"
+     ]
+    },
+    {
+     "official": "continue",
+     "forms": [
+      "continue"
+     ]
+    },
+    {
+     "official": "decide",
+     "forms": [
+      "decide"
+     ]
+    },
+    {
+     "official": "describe",
+     "forms": [
+      "describe"
+     ]
+    },
+    {
+     "official": "different",
+     "forms": [
+      "different"
+     ]
+    },
+    {
+     "official": "difficult",
+     "forms": [
+      "difficult"
+     ]
+    },
+    {
+     "official": "disappear",
+     "forms": [
+      "disappear"
+     ]
+    },
+    {
+     "official": "early",
+     "forms": [
+      "early"
+     ]
+    },
+    {
+     "official": "earth",
+     "forms": [
+      "earth"
+     ]
+    },
+    {
+     "official": "eight/eighth",
+     "forms": [
+      "eight",
+      "eighth"
+     ]
+    },
+    {
+     "official": "enough",
+     "forms": [
+      "enough"
+     ]
+    },
+    {
+     "official": "exercise",
+     "forms": [
+      "exercise"
+     ]
+    },
+    {
+     "official": "experience",
+     "forms": [
+      "experience"
+     ]
+    },
+    {
+     "official": "experiment",
+     "forms": [
+      "experiment"
+     ]
+    },
+    {
+     "official": "extreme",
+     "forms": [
+      "extreme"
+     ]
+    },
+    {
+     "official": "famous",
+     "forms": [
+      "famous"
+     ]
+    },
+    {
+     "official": "favourite",
+     "forms": [
+      "favourite"
+     ]
+    },
+    {
+     "official": "February",
+     "forms": [
+      "February"
+     ]
+    },
+    {
+     "official": "forward(s)",
+     "forms": [
+      "forward",
+      "forwards"
+     ]
+    },
+    {
+     "official": "fruit",
+     "forms": [
+      "fruit"
+     ]
+    },
+    {
+     "official": "grammar",
+     "forms": [
+      "grammar"
+     ]
+    },
+    {
+     "official": "group",
+     "forms": [
+      "group"
+     ]
+    },
+    {
+     "official": "guard",
+     "forms": [
+      "guard"
+     ]
+    },
+    {
+     "official": "guide",
+     "forms": [
+      "guide"
+     ]
+    },
+    {
+     "official": "heard",
+     "forms": [
+      "heard"
+     ]
+    },
+    {
+     "official": "heart",
+     "forms": [
+      "heart"
+     ]
+    },
+    {
+     "official": "height",
+     "forms": [
+      "height"
+     ]
+    },
+    {
+     "official": "history",
+     "forms": [
+      "history"
+     ]
+    },
+    {
+     "official": "imagine",
+     "forms": [
+      "imagine"
+     ]
+    },
+    {
+     "official": "increase",
+     "forms": [
+      "increase"
+     ]
+    },
+    {
+     "official": "important",
+     "forms": [
+      "important"
+     ]
+    },
+    {
+     "official": "interest",
+     "forms": [
+      "interest"
+     ]
+    },
+    {
+     "official": "island",
+     "forms": [
+      "island"
+     ]
+    },
+    {
+     "official": "knowledge",
+     "forms": [
+      "knowledge"
+     ]
+    },
+    {
+     "official": "learn",
+     "forms": [
+      "learn"
+     ]
+    },
+    {
+     "official": "length",
+     "forms": [
+      "length"
+     ]
+    },
+    {
+     "official": "library",
+     "forms": [
+      "library"
+     ]
+    },
+    {
+     "official": "material",
+     "forms": [
+      "material"
+     ]
+    },
+    {
+     "official": "medicine",
+     "forms": [
+      "medicine"
+     ]
+    },
+    {
+     "official": "mention",
+     "forms": [
+      "mention"
+     ]
+    },
+    {
+     "official": "minute",
+     "forms": [
+      "minute"
+     ]
+    },
+    {
+     "official": "natural",
+     "forms": [
+      "natural"
+     ]
+    },
+    {
+     "official": "naughty",
+     "forms": [
+      "naughty"
+     ]
+    },
+    {
+     "official": "notice",
+     "forms": [
+      "notice"
+     ]
+    },
+    {
+     "official": "occasion(ally)",
+     "forms": [
+      "occasion",
+      "occasionally"
+     ]
+    },
+    {
+     "official": "often",
+     "forms": [
+      "often"
+     ]
+    },
+    {
+     "official": "opposite",
+     "forms": [
+      "opposite"
+     ]
+    },
+    {
+     "official": "ordinary",
+     "forms": [
+      "ordinary"
+     ]
+    },
+    {
+     "official": "particular",
+     "forms": [
+      "particular"
+     ]
+    },
+    {
+     "official": "peculiar",
+     "forms": [
+      "peculiar"
+     ]
+    },
+    {
+     "official": "perhaps",
+     "forms": [
+      "perhaps"
+     ]
+    },
+    {
+     "official": "popular",
+     "forms": [
+      "popular"
+     ]
+    },
+    {
+     "official": "position",
+     "forms": [
+      "position"
+     ]
+    },
+    {
+     "official": "possess(ion)",
+     "forms": [
+      "possess",
+      "possession"
+     ]
+    },
+    {
+     "official": "possible",
+     "forms": [
+      "possible"
+     ]
+    },
+    {
+     "official": "potatoes",
+     "forms": [
+      "potatoes"
+     ]
+    },
+    {
+     "official": "pressure",
+     "forms": [
+      "pressure"
+     ]
+    },
+    {
+     "official": "probably",
+     "forms": [
+      "probably"
+     ]
+    },
+    {
+     "official": "promise",
+     "forms": [
+      "promise"
+     ]
+    },
+    {
+     "official": "purpose",
+     "forms": [
+      "purpose"
+     ]
+    },
+    {
+     "official": "quarter",
+     "forms": [
+      "quarter"
+     ]
+    },
+    {
+     "official": "question",
+     "forms": [
+      "question"
+     ]
+    },
+    {
+     "official": "recent",
+     "forms": [
+      "recent"
+     ]
+    },
+    {
+     "official": "regular",
+     "forms": [
+      "regular"
+     ]
+    },
+    {
+     "official": "reign",
+     "forms": [
+      "reign"
+     ]
+    },
+    {
+     "official": "remember",
+     "forms": [
+      "remember"
+     ]
+    },
+    {
+     "official": "sentence",
+     "forms": [
+      "sentence"
+     ]
+    },
+    {
+     "official": "separate",
+     "forms": [
+      "separate"
+     ]
+    },
+    {
+     "official": "special",
+     "forms": [
+      "special"
+     ]
+    },
+    {
+     "official": "straight",
+     "forms": [
+      "straight"
+     ]
+    },
+    {
+     "official": "strange",
+     "forms": [
+      "strange"
+     ]
+    },
+    {
+     "official": "strength",
+     "forms": [
+      "strength"
+     ]
+    },
+    {
+     "official": "suppose",
+     "forms": [
+      "suppose"
+     ]
+    },
+    {
+     "official": "surprise",
+     "forms": [
+      "surprise"
+     ]
+    },
+    {
+     "official": "therefore",
+     "forms": [
+      "therefore"
+     ]
+    },
+    {
+     "official": "though/although",
+     "forms": [
+      "though",
+      "although"
+     ]
+    },
+    {
+     "official": "thought",
+     "forms": [
+      "thought"
+     ]
+    },
+    {
+     "official": "through",
+     "forms": [
+      "through"
+     ]
+    },
+    {
+     "official": "various",
+     "forms": [
+      "various"
+     ]
+    },
+    {
+     "official": "weight",
+     "forms": [
+      "weight"
+     ]
+    },
+    {
+     "official": "woman/women",
+     "forms": [
+      "woman",
+      "women"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "y5-6-word-list",
+   "title": "Years 5 and 6 word list",
+   "years": [
+    5,
+    6
+   ],
+   "statutory": true,
+   "entries": [
+    {
+     "official": "accommodate",
+     "forms": [
+      "accommodate"
+     ]
+    },
+    {
+     "official": "accompany",
+     "forms": [
+      "accompany"
+     ]
+    },
+    {
+     "official": "according",
+     "forms": [
+      "according"
+     ]
+    },
+    {
+     "official": "achieve",
+     "forms": [
+      "achieve"
+     ]
+    },
+    {
+     "official": "aggressive",
+     "forms": [
+      "aggressive"
+     ]
+    },
+    {
+     "official": "amateur",
+     "forms": [
+      "amateur"
+     ]
+    },
+    {
+     "official": "ancient",
+     "forms": [
+      "ancient"
+     ]
+    },
+    {
+     "official": "apparent",
+     "forms": [
+      "apparent"
+     ]
+    },
+    {
+     "official": "appreciate",
+     "forms": [
+      "appreciate"
+     ]
+    },
+    {
+     "official": "attached",
+     "forms": [
+      "attached"
+     ]
+    },
+    {
+     "official": "available",
+     "forms": [
+      "available"
+     ]
+    },
+    {
+     "official": "average",
+     "forms": [
+      "average"
+     ]
+    },
+    {
+     "official": "awkward",
+     "forms": [
+      "awkward"
+     ]
+    },
+    {
+     "official": "bargain",
+     "forms": [
+      "bargain"
+     ]
+    },
+    {
+     "official": "bruise",
+     "forms": [
+      "bruise"
+     ]
+    },
+    {
+     "official": "category",
+     "forms": [
+      "category"
+     ]
+    },
+    {
+     "official": "cemetery",
+     "forms": [
+      "cemetery"
+     ]
+    },
+    {
+     "official": "committee",
+     "forms": [
+      "committee"
+     ]
+    },
+    {
+     "official": "communicate",
+     "forms": [
+      "communicate"
+     ]
+    },
+    {
+     "official": "community",
+     "forms": [
+      "community"
+     ]
+    },
+    {
+     "official": "competition",
+     "forms": [
+      "competition"
+     ]
+    },
+    {
+     "official": "conscience*",
+     "forms": [
+      "conscience"
+     ]
+    },
+    {
+     "official": "conscious*",
+     "forms": [
+      "conscious"
+     ]
+    },
+    {
+     "official": "controversy",
+     "forms": [
+      "controversy"
+     ]
+    },
+    {
+     "official": "convenience",
+     "forms": [
+      "convenience"
+     ]
+    },
+    {
+     "official": "correspond",
+     "forms": [
+      "correspond"
+     ]
+    },
+    {
+     "official": "criticise (critic + ise)",
+     "forms": [
+      "criticise"
+     ]
+    },
+    {
+     "official": "curiosity",
+     "forms": [
+      "curiosity"
+     ]
+    },
+    {
+     "official": "definite",
+     "forms": [
+      "definite"
+     ]
+    },
+    {
+     "official": "desperate",
+     "forms": [
+      "desperate"
+     ]
+    },
+    {
+     "official": "determined",
+     "forms": [
+      "determined"
+     ]
+    },
+    {
+     "official": "develop",
+     "forms": [
+      "develop"
+     ]
+    },
+    {
+     "official": "dictionary",
+     "forms": [
+      "dictionary"
+     ]
+    },
+    {
+     "official": "disastrous",
+     "forms": [
+      "disastrous"
+     ]
+    },
+    {
+     "official": "embarrass",
+     "forms": [
+      "embarrass"
+     ]
+    },
+    {
+     "official": "environment",
+     "forms": [
+      "environment"
+     ]
+    },
+    {
+     "official": "equip (–ped, –ment)",
+     "forms": [
+      "equip",
+      "equipped",
+      "equipment"
+     ]
+    },
+    {
+     "official": "especially",
+     "forms": [
+      "especially"
+     ]
+    },
+    {
+     "official": "exaggerate",
+     "forms": [
+      "exaggerate"
+     ]
+    },
+    {
+     "official": "excellent",
+     "forms": [
+      "excellent"
+     ]
+    },
+    {
+     "official": "existence",
+     "forms": [
+      "existence"
+     ]
+    },
+    {
+     "official": "explanation",
+     "forms": [
+      "explanation"
+     ]
+    },
+    {
+     "official": "familiar",
+     "forms": [
+      "familiar"
+     ]
+    },
+    {
+     "official": "foreign",
+     "forms": [
+      "foreign"
+     ]
+    },
+    {
+     "official": "forty",
+     "forms": [
+      "forty"
+     ]
+    },
+    {
+     "official": "frequently",
+     "forms": [
+      "frequently"
+     ]
+    },
+    {
+     "official": "government",
+     "forms": [
+      "government"
+     ]
+    },
+    {
+     "official": "guarantee",
+     "forms": [
+      "guarantee"
+     ]
+    },
+    {
+     "official": "harass",
+     "forms": [
+      "harass"
+     ]
+    },
+    {
+     "official": "hindrance",
+     "forms": [
+      "hindrance"
+     ]
+    },
+    {
+     "official": "identity",
+     "forms": [
+      "identity"
+     ]
+    },
+    {
+     "official": "immediate(ly)",
+     "forms": [
+      "immediate",
+      "immediately"
+     ]
+    },
+    {
+     "official": "individual",
+     "forms": [
+      "individual"
+     ]
+    },
+    {
+     "official": "interfere",
+     "forms": [
+      "interfere"
+     ]
+    },
+    {
+     "official": "interrupt",
+     "forms": [
+      "interrupt"
+     ]
+    },
+    {
+     "official": "language",
+     "forms": [
+      "language"
+     ]
+    },
+    {
+     "official": "leisure",
+     "forms": [
+      "leisure"
+     ]
+    },
+    {
+     "official": "lightning",
+     "forms": [
+      "lightning"
+     ]
+    },
+    {
+     "official": "marvellous",
+     "forms": [
+      "marvellous"
+     ]
+    },
+    {
+     "official": "mischievous",
+     "forms": [
+      "mischievous"
+     ]
+    },
+    {
+     "official": "muscle",
+     "forms": [
+      "muscle"
+     ]
+    },
+    {
+     "official": "necessary",
+     "forms": [
+      "necessary"
+     ]
+    },
+    {
+     "official": "neighbour",
+     "forms": [
+      "neighbour"
+     ]
+    },
+    {
+     "official": "nuisance",
+     "forms": [
+      "nuisance"
+     ]
+    },
+    {
+     "official": "occupy",
+     "forms": [
+      "occupy"
+     ]
+    },
+    {
+     "official": "occur",
+     "forms": [
+      "occur"
+     ]
+    },
+    {
+     "official": "opportunity",
+     "forms": [
+      "opportunity"
+     ]
+    },
+    {
+     "official": "parliament",
+     "forms": [
+      "parliament"
+     ]
+    },
+    {
+     "official": "persuade",
+     "forms": [
+      "persuade"
+     ]
+    },
+    {
+     "official": "physical",
+     "forms": [
+      "physical"
+     ]
+    },
+    {
+     "official": "prejudice",
+     "forms": [
+      "prejudice"
+     ]
+    },
+    {
+     "official": "privilege",
+     "forms": [
+      "privilege"
+     ]
+    },
+    {
+     "official": "profession",
+     "forms": [
+      "profession"
+     ]
+    },
+    {
+     "official": "programme",
+     "forms": [
+      "programme"
+     ]
+    },
+    {
+     "official": "pronunciation",
+     "forms": [
+      "pronunciation"
+     ]
+    },
+    {
+     "official": "queue",
+     "forms": [
+      "queue"
+     ]
+    },
+    {
+     "official": "recognise",
+     "forms": [
+      "recognise"
+     ]
+    },
+    {
+     "official": "recommend",
+     "forms": [
+      "recommend"
+     ]
+    },
+    {
+     "official": "relevant",
+     "forms": [
+      "relevant"
+     ]
+    },
+    {
+     "official": "restaurant",
+     "forms": [
+      "restaurant"
+     ]
+    },
+    {
+     "official": "rhyme",
+     "forms": [
+      "rhyme"
+     ]
+    },
+    {
+     "official": "rhythm",
+     "forms": [
+      "rhythm"
+     ]
+    },
+    {
+     "official": "sacrifice",
+     "forms": [
+      "sacrifice"
+     ]
+    },
+    {
+     "official": "secretary",
+     "forms": [
+      "secretary"
+     ]
+    },
+    {
+     "official": "shoulder",
+     "forms": [
+      "shoulder"
+     ]
+    },
+    {
+     "official": "signature",
+     "forms": [
+      "signature"
+     ]
+    },
+    {
+     "official": "sincere(ly)",
+     "forms": [
+      "sincere",
+      "sincerely"
+     ]
+    },
+    {
+     "official": "soldier",
+     "forms": [
+      "soldier"
+     ]
+    },
+    {
+     "official": "stomach",
+     "forms": [
+      "stomach"
+     ]
+    },
+    {
+     "official": "sufficient",
+     "forms": [
+      "sufficient"
+     ]
+    },
+    {
+     "official": "suggest",
+     "forms": [
+      "suggest"
+     ]
+    },
+    {
+     "official": "symbol",
+     "forms": [
+      "symbol"
+     ]
+    },
+    {
+     "official": "system",
+     "forms": [
+      "system"
+     ]
+    },
+    {
+     "official": "temperature",
+     "forms": [
+      "temperature"
+     ]
+    },
+    {
+     "official": "thorough",
+     "forms": [
+      "thorough"
+     ]
+    },
+    {
+     "official": "twelfth",
+     "forms": [
+      "twelfth"
+     ]
+    },
+    {
+     "official": "variety",
+     "forms": [
+      "variety"
+     ]
+    },
+    {
+     "official": "vegetable",
+     "forms": [
+      "vegetable"
+     ]
+    },
+    {
+     "official": "vehicle",
+     "forms": [
+      "vehicle"
+     ]
+    },
+    {
+     "official": "yacht",
+     "forms": [
+      "yacht"
+     ]
+    }
+   ]
+  }
+ ]
+}

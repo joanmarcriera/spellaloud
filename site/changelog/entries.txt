@@ -1,0 +1,9 @@
+# Plain-sentence release notes, newest first. One entry per line: DATE | sentence (no jargon, no ticket numbers).
+# bin/build-changelog renders them into site/changelog/index.html; the page's "Last updated" is the newest DATE.
+# The first entry is the waiting-list launch; set its date to the real go-live day when RELEASE.md step 6 passes.
+2026-10-26 | The waiting list opens. Leave your email and we will tell you when the app is ready; we use it for nothing else.
+2026-10-25 | Terms and Help pages added, with a clear 30-day refund promise and answers for lost words and silent iPhones.
+2026-10-24 | Pages for the Year 1 and Year 2 spelling lists, each with a button to hear every word read aloud.
+2026-10-23 | Words and recordings now stay on your own device, so the app works offline and nothing about your children is uploaded.
+2026-10-22 | Export and import: save your words and recordings to a file and restore them on another device.
+2026-10-20 | Fixed the dictation stopping after the first word, and recordings no longer clip the start of words like "spoil".

@@ -1,0 +1,8 @@
+id,created_at,status,refunded
+1001,2026-11-03T10:00:00Z,paid,false
+1002,2026-11-05T10:00:00Z,paid,false
+1003,2026-11-07T10:00:00Z,paid,true
+1004,2026-11-08T10:00:00Z,refunded,
+1005,2026-10-31T10:00:00Z,paid,false
+1002,2026-11-05T10:00:00Z,paid,false
+1006,2026-11-10T10:00:00Z,failed,false

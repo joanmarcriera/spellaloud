@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# bin/coverage - measure server.py test coverage and fail below 90 percent (Vikunja #4336).
+#
+# Usage:  bin/coverage [MIN_PERCENT]        (default 90)
+#   COVERAGE=/path/to/coverage bin/coverage  to pick the binary (default: `coverage` on PATH)
+# coverage is a dev-only tool, not a repo dependency. Install it in a throw-away venv:
+#   python3 -m venv /tmp/cov-venv && /tmp/cov-venv/bin/pip install coverage==7.6.4
+#   COVERAGE=/tmp/cov-venv/bin/coverage bin/coverage
+# The report is limited to the absolute path of server.py: a bare `--include=server.py` also matches the
+# standard library's http/server.py and would drag the total down.
+# Exit 0 when server.py >= MIN_PERCENT, non-zero otherwise. Leaves nothing behind in the repo.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+min="${1:-90}"
+cov="${COVERAGE:-coverage}"
+command -v "$cov" >/dev/null 2>&1 || [ -x "$cov" ] || { echo "bin/coverage: '$cov' not found; see the header for the venv recipe" >&2; exit 2; }
+here="$(pwd -P)"
+# Keep the data file out of the work tree (so no .gitignore entry is needed); removed on exit.
+tmpd="$(mktemp -d)"
+trap 'rm -rf "$tmpd"' EXIT
+export COVERAGE_FILE="$tmpd/.coverage"
+"$cov" run --include="$here/server.py" -m unittest discover -s tests
+"$cov" report --include="$here/server.py" --show-missing --fail-under="$min"

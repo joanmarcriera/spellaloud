@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Performance budget for the no-build app shell and the server start (Vikunja #4339). Read-only; stdlib only.
+
+Usage:  bin/perf-budget [--root DIR] [--budget FILE] [--write-budget]
+  --root          repo root to measure (default: this repo). Needs <root>/static and <root>/server.py.
+  --budget        JSON budget (default: <root>/tools/perf-budget.json).
+  --write-budget  (re)write the budget as current gzip size + 15 percent and start-time 1.5 s; use after a
+                  deliberate size increase, review the diff.
+Measures: gzip -9 size of every static/*.js, static/style.css and static/index.html (the offline shell the
+          service worker caches), and the wall time of `python3 server.py` from spawn to the first HTTP 200 on
+          an ephemeral port with a throw-away data dir.
+Prints:   a table (item, bytes gzip, budget, status). Exit 0 within budget, 1 on any breach, 2 on a setup error.
+The server child is always killed by PID in a finally block; nothing is left running.
+"""
+import argparse, gzip, http.client, json, os, pathlib, socket, subprocess, sys, tempfile, time
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+HEADROOM = 1.15          # budget = current size + 15 percent
+START_BUDGET_S = 1.5
+
+
+def shell_files(root: pathlib.Path):
+    st = root / "static"
+    return sorted(st.glob("*.js")) + [st / "style.css", st / "index.html"]
+
+
+def gz_sizes(root: pathlib.Path):
+    return {f.name: len(gzip.compress(f.read_bytes(), 9, mtime=0)) for f in shell_files(root) if f.is_file()}
+
+
+def start_time(root: pathlib.Path, limit: float = 10.0):
+    """Seconds from spawn to first HTTP 200 on `/`, or None if the server never answered within `limit`."""
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    with tempfile.TemporaryDirectory() as data:
+        env = dict(os.environ, SPELLING_DATA_DIR=data, SPELLING_PORT=str(port), SPELLING_BIND="127.0.0.1")
+        t0 = time.monotonic()
+        p = subprocess.Popen([sys.executable, str(root / "server.py")], env=env, cwd=root,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            while time.monotonic() - t0 < limit and p.poll() is None:
+                try:
+                    c = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
+                    c.request("GET", "/")
+                    if c.getresponse().status == 200:
+                        return time.monotonic() - t0
+                except OSError:
+                    time.sleep(0.01)
+            return None
+        finally:
+            p.kill()
+            p.wait()
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--root", default=str(ROOT))
+    ap.add_argument("--budget")
+    ap.add_argument("--write-budget", action="store_true")
+    a = ap.parse_args()
+    root = pathlib.Path(a.root).resolve()
+    bpath = pathlib.Path(a.budget) if a.budget else root / "tools" / "perf-budget.json"
+    if not (root / "static").is_dir() or not (root / "server.py").is_file():
+        sys.exit(f"perf-budget: {root} has no static/ or server.py")
+    sizes = gz_sizes(root)
+    elapsed = start_time(root)
+    if a.write_budget:
+        data = {"gzip_bytes": {k: int(v * HEADROOM) + 1 for k, v in sizes.items()},
+                "gzip_total_bytes": int(sum(sizes.values()) * HEADROOM) + 1, "start_seconds": START_BUDGET_S}
+        bpath.write_text(json.dumps(data, indent=2) + "\n")
+        print(f"perf-budget: wrote {bpath}")
+    try:
+        budget = json.loads(bpath.read_text())
+    except (OSError, ValueError) as e:
+        sys.exit(f"perf-budget: cannot read budget {bpath}: {e}")
+    bad = 0
+    print(f"{'item':<22}{'gzip bytes':>12}{'budget':>10}  status")
+    rows = [(n, s, budget["gzip_bytes"].get(n)) for n, s in sizes.items()]
+    rows.append(("TOTAL", sum(sizes.values()), budget["gzip_total_bytes"]))
+    for name, size, limit in rows:
+        ok = limit is not None and size <= limit
+        bad += not ok
+        print(f"{name:<22}{size:>12}{(limit if limit is not None else 'none'):>10}  {'ok' if ok else 'OVER'}")
+    ok = elapsed is not None and elapsed <= budget["start_seconds"]
+    bad += not ok
+    shown = "no answer" if elapsed is None else f"{elapsed:.3f} s"
+    print(f"{'server start to 200':<22}{shown:>12}{budget['start_seconds']:>9}s  {'ok' if ok else 'OVER'}")
+    sys.exit(1 if bad else 0)
+
+
+if __name__ == "__main__":
+    main()

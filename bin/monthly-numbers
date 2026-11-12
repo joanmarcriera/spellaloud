@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""The three monthly numbers from CSV exports (Vikunja #5574; definitions: roadmap section 6, docs/roadmap-year-one.md).
+
+Usage:
+  bin/monthly-numbers YYYY-MM --contacts espocrm.csv --orders ls-orders.csv [--support support-log.csv] [--exclude addresses.txt]
+
+Inputs (all local files, no network; real exports are never committed):
+  --contacts  EspoCRM contact export. Columns (header names are matched case-insensitively):
+              email | emailAddress, source | tag | tags | source tag, created | createdAt | created_at.
+  --orders    Lemon Squeezy orders export. Columns: id | order_id, created | created_at | createdAt,
+              status (paid, refunded, partial_refund, failed, pending ...), refunded (true/false/yes/1, optional).
+  --support   The support-log CSV (docs/retention-metrics.md, docs/support-log.md): date,type,minutes,reply_time.
+  --exclude   Text file, one address per line (or "@domain.example"); "#" starts a comment. Drops family and test
+              addresses from the sign-ups, as the go-kill tracker requires.
+
+Output: three lines, then a per-source table.
+  1. New unique sign-ups: distinct addresses (case-insensitive) whose FIRST contact row was created in the month.
+  2. Net paid orders and refund rate: orders created in the month with status paid and not refunded; the
+     refund rate is refunded / (net + refunded). "n/a" when there are no orders.
+  3. Support minutes per net paid order: minutes of support-log rows dated in the month / net orders. "n/a" when
+     there are no net orders or no support file.
+Exit 0 on success, 2 on a usage or input error.
+"""
+import argparse
+import csv
+import re
+import sys
+from collections import Counter
+
+TRUE = {"true", "yes", "y", "1", "refunded"}
+
+
+def rows(path):
+    """Read a CSV into dicts keyed by lower-cased, stripped header names."""
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return [{(k or "").strip().lower(): (v or "").strip() for k, v in r.items()} for r in csv.DictReader(f)]
+
+
+def pick(row, *names):
+    """First non-empty value among the candidate column names."""
+    for n in names:
+        if row.get(n):
+            return row[n]
+    return ""
+
+
+def month_of(stamp):
+    """'2026-11-03T10:00:00Z' or '2026-11-03' -> '2026-11'; '' if it does not start with a date."""
+    m = re.match(r"(\d{4}-\d{2})-\d{2}", stamp)
+    return m.group(1) if m else ""
+
+
+def load_exclude(path):
+    """Exact addresses and @domain suffixes, lower-cased."""
+    out = set()
+    if path:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip().lower()
+                if line:
+                    out.add(line)
+    return out
+
+
+def excluded(email, ex):
+    return email in ex or ("@" + email.split("@")[-1]) in ex
+
+
+def signups(contacts, month, ex):
+    """(total, Counter by source) of unique addresses whose first row falls in `month`."""
+    first = {}  # email -> (created, source) of its earliest row
+    for r in contacts:
+        email = pick(r, "email", "emailaddress", "email address").lower()
+        created = pick(r, "created", "createdat", "created_at", "created at")
+        if not email or not month_of(created) or excluded(email, ex):
+            continue
+        source = pick(r, "source", "tag", "tags", "source tag") or "(none)"
+        if email not in first or created < first[email][0]:
+            first[email] = (created, source)
+    by_source = Counter(src for created, src in first.values() if month_of(created) == month)
+    return sum(by_source.values()), by_source
+
+
+def orders(order_rows, month):
+    """(net paid orders, refunded orders) created in `month`; an order id counts once."""
+    seen, net, refunded = set(), 0, 0
+    for r in order_rows:
+        oid = pick(r, "id", "order_id", "order id", "order number")
+        if month_of(pick(r, "created", "created_at", "createdat", "created at")) != month:
+            continue
+        if oid and oid in seen:
+            continue
+        seen.add(oid)
+        status = r.get("status", "").lower()
+        is_ref = r.get("refunded", "").lower() in TRUE or status in ("refunded", "partial_refund")
+        if is_ref:
+            refunded += 1
+        elif status in ("", "paid"):
+            net += 1
+    return net, refunded
+
+
+def support_minutes(support_rows, month):
+    total = 0
+    for r in support_rows:
+        if month_of(r.get("date", "")) == month:
+            try:
+                total += int(float(r.get("minutes", "0") or 0))
+            except ValueError:
+                raise SystemExit("bin/monthly-numbers: support log has a non-numeric minutes value: %r" % r.get("minutes"))
+    return total
+
+
+def report(month, contacts, order_rows, support_rows, ex):
+    """The text printed: three lines, a blank line, the per-source table."""
+    total, by_source = signups(contacts, month, ex)
+    net, refunded = orders(order_rows, month)
+    denom = net + refunded
+    rate = "n/a" if denom == 0 else "%.1f%%" % (100.0 * refunded / denom)
+    if support_rows is None or net == 0:
+        per_order = "n/a"
+    else:
+        per_order = "%.1f" % (support_minutes(support_rows, month) / net)
+    lines = [
+        "%s new unique sign-ups: %d" % (month, total),
+        "%s net paid orders: %d, refunded: %d, refund rate: %s" % (month, net, refunded, rate),
+        "%s support minutes per net paid order: %s" % (month, per_order),
+        "",
+        "source\tsign-ups",
+    ]
+    lines += ["%s\t%d" % (s, n) for s, n in sorted(by_source.items(), key=lambda kv: (-kv[1], kv[0]))] or ["(none)\t0"]
+    return "\n".join(lines)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="Compute the three monthly numbers from CSV exports.")
+    ap.add_argument("month", help="YYYY-MM")
+    ap.add_argument("--contacts", required=True)
+    ap.add_argument("--orders", required=True)
+    ap.add_argument("--support")
+    ap.add_argument("--exclude")
+    a = ap.parse_args(argv)
+    if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", a.month):
+        print("bin/monthly-numbers: month must be YYYY-MM", file=sys.stderr)
+        return 2
+    try:
+        print(report(a.month, rows(a.contacts), rows(a.orders), rows(a.support) if a.support else None, load_exclude(a.exclude)))
+    except OSError as e:
+        print("bin/monthly-numbers: %s" % e, file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

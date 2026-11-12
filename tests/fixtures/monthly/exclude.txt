@@ -1,0 +1,3 @@
+# family and test addresses
+@home.example.invalid
+test1@example.invalid

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# bin/quickstart-check - prove the README "Run locally" line from a clean clone (Vikunja #4337).
+#
+# Usage:  bin/quickstart-check
+# Clones this repo's committed HEAD into a temp dir, starts the README run line
+#   SPELLING_DATA_DIR=./data python3 server.py
+# with SPELLING_PORT=8791 and SPELLING_BIND=127.0.0.1, polls / and /parent for HTTP 200 (up to ~20 s),
+# prints one "HTTP <code> <url>" line each, then kills the server by PID and removes the temp dir.
+# Uncommitted changes are NOT tested (the clone sees commits only). Exit 0 when both URLs return 200.
+# Nothing leaves the machine: loopback only.
+set -euo pipefail
+src="$(cd "$(dirname "$0")/.." && pwd -P)"
+port=8791
+if lsof -i ":$port" >/dev/null 2>&1; then echo "quickstart-check: port $port is busy" >&2; exit 3; fi
+tmp="$(mktemp -d)"
+pid=""
+cleanup() { [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; rm -rf "$tmp"; }
+trap cleanup EXIT
+git clone -q "$src" "$tmp/clone"
+cd "$tmp/clone"
+SPELLING_PORT=$port SPELLING_BIND=127.0.0.1 SPELLING_DATA_DIR=./data python3 server.py >"$tmp/server.log" 2>&1 &
+pid=$!
+status() { python3 -c "
+import sys, urllib.request, urllib.error
+try:
+    print(urllib.request.urlopen(sys.argv[1], timeout=2).status)
+except urllib.error.HTTPError as e:
+    print(e.code)
+except OSError:
+    print(0)
+" "$1"; }
+rc=0
+for path in / /parent; do
+  url="http://127.0.0.1:$port$path"
+  code=0
+  for _ in $(seq 1 40); do
+    code="$(status "$url")"
+    [ "$code" = 200 ] && break
+    kill -0 "$pid" 2>/dev/null || break
+    sleep 0.5
+  done
+  echo "HTTP $code $url"
+  [ "$code" = 200 ] || rc=1
+done
+[ "$rc" = 0 ] || { echo "--- server log"; cat "$tmp/server.log"; }
+exit "$rc"
