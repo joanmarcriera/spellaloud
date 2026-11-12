@@ -12,7 +12,7 @@
 //
 // snapshot = {
 //   kids:     [{slug, name, year, settings}],
-//   weeks:    [{kid, week_start:'YYYY-MM-DD', words:[{label, position, audio:'audio/3.wav'|null}]}],
+//   weeks:    [{kid, week_start:'YYYY-MM-DD', term?, words:[{label, position, audio:'audio/3.wav'|null, audio_source?:'tts', cleared_at?}]}],
 //   sessions: [{kid, created_at, mode, settings, results:[{week_start, label, correct}]}]
 // }
 // Words are identified by (kid, week_start, label lower-cased), never by database id, so merges
@@ -224,7 +224,10 @@ export function selectSnapshot(snapshot, audio, choice) {
       ...w, kid: slugMap.get(w.kid),
       words: w.words.map((word) => {
         const rec = { label: word.label, position: word.position, audio: null };
-        if (choice.recordings && word.audio && audio[word.audio]) { rec.audio = word.audio; outAudio[word.audio] = audio[word.audio]; }
+        if (choice.recordings && word.audio && audio[word.audio]) {
+          rec.audio = word.audio; outAudio[word.audio] = audio[word.audio];
+          if (word.audio_source === 'tts') rec.audio_source = 'tts';
+        }
         if (choice.results && word.cleared_at) rec.cleared_at = word.cleared_at;
         return rec;
       }),
@@ -305,7 +308,10 @@ export function mergePack(existing, existingAudio, incoming, incomingAudio, mode
         const copy = { label: iword.label, position: have.words.length + 1, audio: null };
         const cl = laterStamp(iword.cleared_at, null);
         if (cl) copy.cleared_at = cl;
-        if (iword.audio) { copy.audio = fresh(); audio[copy.audio] = incomingAudio[iword.audio]; sum.recordingsAdded++; }
+        if (iword.audio) {
+          copy.audio = fresh(); audio[copy.audio] = incomingAudio[iword.audio]; sum.recordingsAdded++;
+          if (iword.audio_source === 'tts') copy.audio_source = 'tts';
+        }
         have.words.push(copy);
         words.set(wordKey(copy), copy);
         sum.wordsAdded++;
@@ -313,6 +319,7 @@ export function mergePack(existing, existingAudio, incoming, incomingAudio, mode
         if (!mine.audio && iword.audio) {
           mine.audio = fresh();
           audio[mine.audio] = incomingAudio[iword.audio];
+          if (iword.audio_source === 'tts') mine.audio_source = 'tts';
           sum.recordingsAdded++;
         }
         // keep the newest "I know it" marker (#4527); a bad stamp never overwrites a good one
