@@ -4,7 +4,9 @@
 //
 // File format (`spellings-<child>-<date>.spellings`) = a standard ZIP (stored, no compression, so any
 // unzip tool can open it) containing:
-//   manifest.json   {format:'spellings-pack', version:1, created, app}
+//   manifest.json   {format:'spellings-pack', version:1, created, app, contents?}
+//                   contents = {recordings, results, settings, names} booleans: what the parent chose to put in
+//                   (missing in files made before 2026-11-12 = everything). Older readers ignore it.
 //   data.json       the snapshot (below)
 //   audio/<n>.wav   one clip per word that has audio; data.json references it by name
 //
@@ -128,9 +130,11 @@ export function unzipStore(bytes) {
 }
 
 /** Build the pack bytes. `audio` maps a name referenced by the snapshot (e.g. 'audio/1.wav') to bytes. */
-export function buildPack(snapshot, audio = {}, { now = new Date().toISOString() } = {}) {
+export function buildPack(snapshot, audio = {}, { now = new Date().toISOString(), contents = null } = {}) {
+  const manifest = { format: FORMAT, version: VERSION, created: now, app: 'spellings' };
+  if (contents) manifest.contents = contents;
   const files = {
-    'manifest.json': enc.encode(JSON.stringify({ format: FORMAT, version: VERSION, created: now, app: 'spellings' })),
+    'manifest.json': enc.encode(JSON.stringify(manifest)),
     'data.json': enc.encode(JSON.stringify(snapshot)),
   };
   for (const w of snapshot.weeks) {
@@ -167,7 +171,82 @@ export function parsePack(bytes) {
       }
     }
   }
-  return { snapshot, audio, created: manifest.created };
+  const c = manifest.contents;
+  const contents = c && typeof c === 'object' && CONTENT_KEYS.every((k) => typeof c[k] === 'boolean')
+    ? Object.fromEntries(CONTENT_KEYS.map((k) => [k, c[k]])) : null;
+  return { snapshot, audio, created: manifest.created, contents };
+}
+
+// ---- Choose what goes in the file (2026-11-12). Words are always in; the rest is the parent's choice.
+/** The optional parts of a backup file, in the order the parent page lists them. */
+export const CONTENT_KEYS = ['recordings', 'results', 'settings', 'names'];
+/** "Everything, for me" (keep it, or move to another device) and "To share with another parent" (words only). */
+export const BACKUP_PRESETS = {
+  everything: { recordings: true, results: true, settings: true, names: true },
+  share: { recordings: false, results: false, settings: false, names: false },
+};
+const CONTENT_WORDS = { recordings: 'recordings', results: 'scores and stars', settings: 'settings', names: 'names' };
+
+/** What a snapshot really holds (a file's manifest `contents` is only a label; a hand-made file could lie). */
+export function contentsOf(snapshot, audio = {}) {
+  return {
+    recordings: Object.keys(audio).length > 0,
+    results: snapshot.sessions.length > 0 || snapshot.weeks.some((w) => w.words.some((x) => x.cleared_at)),
+    settings: snapshot.kids.some((k) => k.settings && Object.keys(k.settings).length > 0),
+    names: snapshot.kids.some((k) => !/^Child \d+$/.test(k.name)),
+  };
+}
+
+/** What a file holds, for the import preview: "words only", "words, recordings, ..." or older files' "everything". */
+export function describeContents(contents) {
+  if (!contents) return 'everything (older file)';
+  const on = CONTENT_KEYS.filter((k) => contents[k]).map((k) => CONTENT_WORDS[k]);
+  return on.length ? ['words', ...on].join(', ') : 'words only';
+}
+
+/**
+ * Cut a snapshot down to what the parent chose. `choice` = {kids: [slug] | null (= all), recordings, results,
+ * settings, names}. Without results the sessions and the "I know it" marks go; without names each child becomes
+ * "Child N" (slug child-N), so a file shared in a class group names nobody. Returns {snapshot, audio}; pure.
+ */
+export function selectSnapshot(snapshot, audio, choice) {
+  const pick = choice.kids == null ? null : new Set(choice.kids);
+  const kids = snapshot.kids.filter((k) => !pick || pick.has(k.slug));
+  if (!kids.length) throw new Error('Choose at least one child to back up.');
+  const slugMap = new Map(kids.map((k, i) => [k.slug, choice.names ? k.slug : `child-${i + 1}`]));
+  const outAudio = {};
+  const out = {
+    kids: kids.map((k, i) => ({
+      slug: slugMap.get(k.slug), name: choice.names ? k.name : `Child ${i + 1}`, year: k.year,
+      settings: choice.settings ? structuredClone(k.settings || {}) : {},
+    })),
+    weeks: snapshot.weeks.filter((w) => slugMap.has(w.kid)).map((w) => ({
+      ...w, kid: slugMap.get(w.kid),
+      words: w.words.map((word) => {
+        const rec = { label: word.label, position: word.position, audio: null };
+        if (choice.recordings && word.audio && audio[word.audio]) { rec.audio = word.audio; outAudio[word.audio] = audio[word.audio]; }
+        if (choice.results && word.cleared_at) rec.cleared_at = word.cleared_at;
+        return rec;
+      }),
+    })),
+    sessions: choice.results ? snapshot.sessions.filter((x) => slugMap.has(x.kid)).map((x) => ({ ...structuredClone(x), kid: slugMap.get(x.kid) })) : [],
+  };
+  return { snapshot: out, audio: outAudio };
+}
+
+/**
+ * Put a one-child file under one of this device's children (`toSlug`): the file's child record is dropped and its
+ * weeks and sessions are re-labelled, so mergePack adds the words to that child instead of making a new one.
+ */
+export function retargetSnapshot(snapshot, toSlug) {
+  if (snapshot.kids.length !== 1) {
+    throw new Error(`This file holds ${snapshot.kids.length} children, so it can only be imported as they are. Choose "The children in the file".`);
+  }
+  return {
+    kids: [],
+    weeks: snapshot.weeks.map((w) => ({ ...w, kid: toSlug })),
+    sessions: snapshot.sessions.map((x) => ({ ...x, kid: toSlug })),
+  };
 }
 
 /** Key for a word within a snapshot. */

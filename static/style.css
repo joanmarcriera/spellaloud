@@ -265,3 +265,11 @@ dialog.tour h3 { font-size: 1rem; margin: 1rem 0 .3rem; }
 .tour-points li, .tour-steps li { margin: .25rem 0; }
 dialog.tour textarea, dialog.tour input[type="text"], dialog.tour input[type="date"], dialog.tour select { width: 100%; padding: .45em; font: inherit; box-sizing: border-box; }
 dialog.tour .field { margin: .4rem 0; flex: 1 1 10rem; }
+
+/* Backup chooser (parent page, 2026-11-12): who and what goes into the file. */
+.backupchooser fieldset { border: 2px solid var(--line); border-radius: 10px; margin: .5rem 0; padding: .4rem .8rem; }
+.backupchooser legend { font-weight: 700; padding: 0 .3rem; }
+.backupchooser .choice { display: flex; align-items: center; gap: .4rem; min-height: 44px; }
+.backupchooser .choice input { width: 1.3rem; height: 1.3rem; flex: none; }
+.backuphelp { padding-left: 1.2rem; }
+.importbox select { max-width: 100%; }

@@ -4,6 +4,7 @@
 import { createTransport } from './transport.js';
 import { requestPersistence, isInstalled, platformOf, storageNotices } from './durability.js';
 import { exportBackup, previewImport, applyImport } from './backup.js';
+import { BACKUP_PRESETS, CONTENT_KEYS, describeContents, contentsOf, parsePack } from './pack.js';
 import { VOICE_MODE_KEY, storedVoiceMode, pickVoice, loadVoices, gbVoices, recordingPlan, voiceStatus } from './voice.js';
 import { buildShareLink, parseShare } from './share.js';
 import { qrMatrix, qrSvgPath } from './qr.js';
@@ -615,9 +616,8 @@ function eraseSection(store, kids, doExport, msg) {
       if (!confirm('Erase every child, word, recording and score on this device? This cannot be undone. Have you saved a backup file?')) { msg.textContent = 'Nothing was erased.'; return; }
       try {
         await store.eraseAll({ confirmed: true });
-        msg.textContent = 'Everything on this device has been erased.';
         await render();
-        await paintBackupBox();
+        await paintBackupBox('Everything on this device has been erased.');
       } catch (e) { msg.textContent = `Could not erase: ${e.message}`; }
     } }, 'Erase everything now'),
     h('button', { type: 'button', class: 'btn small', onclick: () => { step2.hidden = true; } }, 'Cancel'));
@@ -630,7 +630,8 @@ function eraseSection(store, kids, doExport, msg) {
     step2);
 }
 
-async function paintBackupBox() {
+/** (Re)draw the backup panel. `note` is shown in its status line afterwards (a redraw must not eat "Saved ..."). */
+async function paintBackupBox(note = '') {
   const t = await transportReady;
   if (t.mode !== 'local') return;
   const box = document.getElementById('backupbox');
@@ -640,40 +641,144 @@ async function paintBackupBox() {
     persisted: persistence.persisted, installed: isInstalled(), platform: platformOf(navigator.userAgent, navigator.maxTouchPoints),
     lastExport: store.getMeta().last_export, hasData: store.hasData(),
   });
-  const msg = h('p', { class: 'note', role: 'status' });
+  const msg = h('p', { class: 'note', role: 'status' }, note);
   const doExport = async (slug) => {
     try {
       const out = await exportBackup(store, { kid: slug });
-      msg.textContent = out.outcome === 'cancelled' ? 'Nothing was saved.' : `Saved ${out.filename}. Keep it somewhere safe (Files, WhatsApp, email).`;
-      await paintBackupBox();
+      await paintBackupBox(out.outcome === 'cancelled' ? 'Nothing was saved.' : `Saved ${out.filename}. Keep it somewhere safe (Files, WhatsApp, email).`);
     } catch (e) { msg.textContent = `Could not export: ${e.message}`; }
   };
   const kids = await api('GET', '/api/kids');
-  const file = h('input', { type: 'file', accept: '.spellings', 'aria-label': 'Backup file' });
-  const modeSel = h('select', { 'aria-label': 'How to import' },
-    h('option', { value: 'merge' }, 'Add to what is here'), h('option', { value: 'replace' }, 'Replace everything here'));
-  const importBtn = h('button', { type: 'button', class: 'btn small', onclick: async () => {
-    const f = file.files && file.files[0];
-    if (!f) { msg.textContent = 'Choose a .spellings file first.'; return; }
-    try {
-      const preview = await previewImport(store, new Uint8Array(await f.arrayBuffer()), modeSel.value);
-      if (!confirm(`${preview.text}\n\nGo ahead?`)) { msg.textContent = 'Nothing changed.'; return; }
-      await applyImport(store, preview);
-      msg.textContent = 'Imported.';
-      await render();
-      await paintBackupBox();
-    } catch (e) { msg.textContent = e.message; }
-  } }, 'Import');
   box.replaceChildren(
     h('h2', {}, 'Back up / move to another device'),
     ...notices.map((n) => h('p', { class: n.level === 'warn' ? 'msg err' : 'note', 'data-notice': n.id }, n.text)),
-    h('p', { class: 'note' }, 'Your words, recordings and progress live only on this device. Export one file, then import it on another phone or tablet.'),
-    h('div', { class: 'screenbox' }, kids.map((k) => h('button', { type: 'button', class: 'btn small', onclick: () => doExport(k.slug) }, `Export ${k.name}`)),
-      kids.length > 1 && h('button', { type: 'button', class: 'btn small', onclick: () => doExport(null) }, 'Export everyone')),
-    h('div', { class: 'screenbox' }, file, modeSel, importBtn),
+    h('p', { class: 'note' }, 'Your words, recordings and progress live only on this device. A backup file keeps them safe, moves them to another phone or tablet, or shares words with another parent.'),
+    kids.length ? backupChooser(store, kids, msg) : h('p', { class: 'note' }, 'Add a child first, then you can make a backup file.'),
+    importSection(store, kids, msg),
     msg,
     eraseSection(store, kids, doExport, msg));
   box.hidden = false;
+}
+
+/**
+ * "Make a backup file" (2026-11-12): the parent picks who (each child) and what (words always; recordings, scores
+ * and stars, settings, names optional). Two presets: "Everything, for me" (keep it or move device) and "To share with
+ * another parent" (words only: no child's voice, scores or names). exportBackup() does the cutting (pack.js
+ * selectSnapshot); only a full backup resets the "time to back up" reminder.
+ */
+function backupChooser(store, kids, msg) {
+  const box = (label, checked, extra = {}) => {
+    const cb = h('input', { type: 'checkbox', checked, 'aria-label': label, ...extra });
+    return { cb, row: h('label', { class: 'choice' }, cb, ' ', label) };
+  };
+  const who = kids.map((k) => ({ slug: k.slug, ...box(k.name, true) }));
+  const words = box('Spelling words, every week (always included)', true, { disabled: true });
+  const what = {
+    recordings: box('Recordings (the voices saying the words)', true),
+    results: box('Scores, stars and "I know it" marks', true),
+    settings: box('Settings (voice, speed, school calendar)', true),
+    names: box("Children's names", true),
+  };
+  const go = h('button', { type: 'button', class: 'btn small solid', id: 'backup-go' }, 'Export a full backup'); // label follows the choice
+  const summary = h('p', { class: 'note', id: 'backup-summary' });
+  let busy = false; // an export is in flight: the button stays off even if a box is ticked meanwhile
+  const preset = (name) => { for (const k of CONTENT_KEYS) what[k].cb.checked = BACKUP_PRESETS[name][k]; update(); };
+  const choice = () => Object.fromEntries(CONTENT_KEYS.map((k) => [k, what[k].cb.checked]));
+  function update() {
+    const c = choice();
+    const chosen = who.filter((x) => x.cb.checked);
+    const all = CONTENT_KEYS.every((k) => c[k]);
+    const none = CONTENT_KEYS.every((k) => !c[k]);
+    go.textContent = none ? 'Export the words to share' : all && chosen.length === who.length ? 'Export a full backup' : 'Export the chosen parts';
+    go.disabled = !chosen.length || busy;
+    summary.textContent = chosen.length
+      ? `The file will hold: ${describeContents(c)}, for ${c.names ? chosen.map((x) => x.row.textContent.trim()).join(', ') : `${chosen.length} child${chosen.length === 1 ? '' : 'ren'} (no names)`}.`
+      : 'Tick at least one child.';
+    if (!c.names && chosen.length === 1) summary.append(' The other parent picks which of their children gets the words.');
+    if (!c.names && chosen.length > 1) summary.append(' To share, tick one child only: then the other parent can add the words to their own child (with more, they arrive as "Child 1", "Child 2").');
+  }
+  for (const x of [...who, ...Object.values(what)]) x.cb.addEventListener('change', update);
+  go.onclick = async () => {
+    if (busy) return;
+    busy = true; go.disabled = true;
+    try {
+      const chosen = who.filter((x) => x.cb.checked).map((x) => x.slug);
+      const out = await exportBackup(store, { kids: chosen.length === kids.length ? null : chosen, choice: choice() });
+      await paintBackupBox(out.outcome === 'cancelled' ? 'Nothing was saved.'
+        : CONTENT_KEYS.every((k) => choice()[k]) ? `Saved ${out.filename}. Keep it somewhere safe (Files, Drive, or send it to yourself).`
+          : `Saved ${out.filename}. Send it to the other parent (WhatsApp, email). They import it under Back up > Import a file.`);
+    } catch (e) { msg.textContent = `Could not export: ${e.message}`; busy = false; update(); }
+  };
+  update();
+  return h('div', { class: 'backupchooser' },
+    h('h3', {}, 'Make a backup file'),
+    h('div', { class: 'screenbox' },
+      h('button', { type: 'button', class: 'btn small', onclick: () => preset('everything') }, 'Everything, for me'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => preset('share') }, 'To share with another parent')),
+    h('ul', { class: 'note backuphelp' },
+      h('li', {}, 'To keep a copy or move to a new phone or tablet: choose Everything, then save the file somewhere safe.'),
+      h('li', {}, "To share with another parent: choose \"To share\" (words only: no recordings of your child's voice, no scores, no names), then send them the file."),
+      h('li', {}, 'For one week of words, "Share list" on that week sends a link instead. That is quicker.')),
+    h('fieldset', {}, h('legend', {}, 'Who'), ...who.map((x) => x.row)),
+    h('fieldset', {}, h('legend', {}, 'What'), words.row, ...CONTENT_KEYS.map((k) => what[k].row)),
+    summary, go);
+}
+
+/**
+ * "Import a file": reads the file as soon as it is chosen and says what it holds. A one-child file (for example a
+ * words-only list from another parent) can go under one of this device's children instead of becoming a new child.
+ */
+function importSection(store, kids, msg) {
+  const file = h('input', { type: 'file', accept: '.spellings', 'aria-label': 'Backup file' });
+  const info = h('p', { class: 'note', role: 'status' });
+  const CHOOSE = '__choose';
+  const target = h('select', { 'aria-label': 'Whose words' },
+    h('option', { value: CHOOSE, hidden: true }, 'Choose whose words these are…'),
+    h('option', { value: '' }, 'The children in the file'),
+    kids.map((k) => h('option', { value: k.slug }, `Add the words to ${k.name}`)));
+  const modeSel = h('select', { 'aria-label': 'How to import' },
+    h('option', { value: 'merge' }, 'Add to what is here'), h('option', { value: 'replace' }, 'Replace everything here'));
+  const sync = () => { // replace cannot be combined with "add to one child"
+    const one = target.value && target.value !== CHOOSE;
+    modeSel.querySelector('option[value=replace]').disabled = !!one;
+    if (one) modeSel.value = 'merge';
+  };
+  target.addEventListener('change', sync);
+  file.addEventListener('change', async () => {
+    info.textContent = '';
+    target.value = ''; target.disabled = false; sync(); // nothing from a previous file carries over
+    const f = file.files && file.files[0];
+    if (!f) return;
+    try {
+      const p = parsePack(new Uint8Array(await f.arrayBuffer()));
+      const n = p.snapshot.kids.length;
+      const c = contentsOf(p.snapshot, p.audio); // from the data, not the file's own label
+      info.textContent = `This file holds ${describeContents(c)} for ${n} child${n === 1 ? '' : 'ren'} (${p.snapshot.kids.map((k) => k.name).join(', ')}).`;
+      // Words shared by another parent (no names): they belong to one of your children. With one child that is the
+      // obvious choice; with more, the parent must pick (review 2026-11-12: a silent default is too easy to get wrong).
+      if (n === 1 && !c.names && kids.length) target.value = kids.length === 1 ? kids[0].slug : CHOOSE;
+      target.disabled = n !== 1 || !kids.length;
+      if (target.value === CHOOSE) info.append(' Choose which of your children gets the words.');
+      sync();
+    } catch (e) { info.textContent = e.message; }
+  });
+  const importBtn = h('button', { type: 'button', class: 'btn small', onclick: async () => {
+    const f = file.files && file.files[0];
+    if (!f) { msg.textContent = 'Choose a .spellings file first.'; return; }
+    if (target.value === CHOOSE) { msg.textContent = 'Choose which of your children gets the words.'; target.focus(); return; }
+    try {
+      const preview = await previewImport(store, new Uint8Array(await f.arrayBuffer()), modeSel.value, { target: target.value || null });
+      if (!confirm(`${preview.text}\n\nGo ahead?`)) { msg.textContent = 'Nothing changed.'; return; }
+      await applyImport(store, preview);
+      await render();
+      await paintBackupBox('Imported. ' + preview.text.split('\n').pop());
+    } catch (e) { msg.textContent = e.message; }
+  } }, 'Import');
+  return h('div', { class: 'importbox' },
+    h('h3', {}, 'Import a file'),
+    h('p', { class: 'note' }, 'A backup you made, or words another parent sent you.'),
+    file, info,
+    h('div', { class: 'screenbox' }, target, modeSel, importBtn));
 }
 paintBackupBox().catch(() => { /* backup panel is optional; the rest of the page still works */ });
 

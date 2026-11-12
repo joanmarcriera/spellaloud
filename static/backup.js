@@ -1,23 +1,35 @@
 // backup.js - glue between the local store (store.js) and the one-file pack (pack.js): the logic behind the
 // parent area's "Back up / move to another device" panel (Vikunja #3534). No DOM here, so node tests can drive it.
-//   exportBackup(store, {kid, env})  builds the file and hands it to the share sheet or a download
-//   previewImport(store, bytes, mode) parses a file and says what would change, writing nothing
+//   exportBackup(store, {kids, choice, env})  builds the file (who and what the parent chose) and hands it to the
+//                                     share sheet or a download
+//   previewImport(store, bytes, mode, {target}) parses a file and says what would change, writing nothing; a one-child
+//                                     file can go under one of this device's children (`target`)
 //   applyImport(store, preview)       writes it
 // The £2.99 licence gate (#3536) is deliberately not here: the UI decides whether Export is enabled.
 
-import { buildPack, parsePack, mergePack, packFilename, deliverPack, describeSummary } from './pack.js';
+import { buildPack, parsePack, mergePack, packFilename, deliverPack, describeSummary, selectSnapshot, retargetSnapshot, describeContents, contentsOf, BACKUP_PRESETS, CONTENT_KEYS } from './pack.js';
 import { validVoiceName } from './voice.js';
 import { MAX_AUDIO, MAX_LABEL, MAX_WORDS_PER_WEEK, MAX_TERMS_OFF, mondayOf } from './store.js';
 import { CALENDARS, isTermLabel } from './terms.js';
 
-/** Export one child (slug) or everyone (kid = null). Returns {outcome:'shared'|'downloaded'|'cancelled', filename}. */
-export async function exportBackup(store, { kid = null, env = globalThis } = {}) {
-  const { snapshot, audio } = await store.snapshot(kid);
-  const bytes = buildPack(snapshot, audio, { now: store.now().toISOString() });
-  const name = kid ? (snapshot.kids[0] && snapshot.kids[0].name) : 'family';
+/**
+ * Export a backup file. Who: `kids` (array of slugs) or the older `kid` (one slug), or everyone when neither is
+ * given. What: `choice` = {recordings, results, settings, names} (pack.js BACKUP_PRESETS; default everything).
+ * Only a full backup (everything) counts for the "time to back up" reminder: a words-only file is for sharing.
+ * Returns {outcome:'shared'|'downloaded'|'cancelled', filename}.
+ */
+export async function exportBackup(store, { kid = null, kids = null, choice = BACKUP_PRESETS.everything, env = globalThis } = {}) {
+  const slugs = kids ?? (kid ? [kid] : null);
+  const all = await store.snapshot();
+  const { snapshot, audio } = selectSnapshot(all.snapshot, all.audio, { kids: slugs, ...choice });
+  const contents = Object.fromEntries(CONTENT_KEYS.map((k) => [k, !!choice[k]]));
+  const bytes = buildPack(snapshot, audio, { now: store.now().toISOString(), contents });
+  const name = !choice.names ? 'words' : slugs && slugs.length === 1 ? snapshot.kids[0].name : 'family';
   const filename = packFilename(name, store.now());
   const outcome = await deliverPack(bytes, filename, env);
-  if (outcome !== 'cancelled') await store.setMeta({ last_export: store.now().toISOString() });
+  // Every part AND every child: a backup of only some children must not silence the reminder (review 2026-11-12).
+  const full = CONTENT_KEYS.every((k) => choice[k]) && (!slugs || all.snapshot.kids.every((k) => slugs.includes(k.slug)));
+  if (outcome !== 'cancelled' && full) await store.setMeta({ last_export: store.now().toISOString() });
   return { outcome, filename };
 }
 
@@ -87,13 +99,30 @@ export function validateSnapshot(snap, audio = {}) {
   }
 }
 
-/** Parse + merge without writing. `mode` = 'merge' (default) | 'replace'. Throws a friendly Error for a bad file. */
-export async function previewImport(store, bytes, mode = 'merge') {
+/**
+ * Parse + merge without writing. `mode` = 'merge' (default) | 'replace'. `target` = a child on this device to put a
+ * one-child file under (a list another parent shared), or null to import the file's children as they are.
+ * Throws a friendly Error for a bad file or an impossible choice.
+ */
+export async function previewImport(store, bytes, mode = 'merge', { target = null } = {}) {
   const incoming = parsePack(bytes);
   validateSnapshot(incoming.snapshot, incoming.audio);
   const existing = await store.snapshot();
-  const merged = mergePack(existing.snapshot, existing.audio, incoming.snapshot, incoming.audio, mode);
-  return { ...merged, text: describeSummary(merged.summary) };
+  let snap = incoming.snapshot;
+  let who = '';
+  if (target) {
+    if (mode === 'replace') throw new Error('Replace everything cannot put the words under one child. Choose "Add to what is here".');
+    const kid = existing.snapshot.kids.find((k) => k.slug === target);
+    if (!kid) throw new Error('That child is not on this device.');
+    snap = retargetSnapshot(snap, target);
+    who = `Adding the words to ${kid.name}. `;
+  }
+  const merged = mergePack(existing.snapshot, existing.audio, snap, incoming.audio, mode);
+  const full = merged.snapshot.weeks.find((w) => w.words.length > MAX_WORDS_PER_WEEK);
+  if (full) throw new Error(`That would put more than ${MAX_WORDS_PER_WEEK} words in the week of ${full.week_start}. Delete some words there first, or import the file as its own child.`);
+  // Describe what the file really holds (its manifest label is untrusted), and say whose words change.
+  const contents = contentsOf(incoming.snapshot, incoming.audio);
+  return { ...merged, contents, text: `${who}This file holds ${describeContents(contents)}.\n${describeSummary(merged.summary)}` };
 }
 
 /** Write a preview from previewImport. A failed write leaves the old data in place (one IndexedDB transaction). */

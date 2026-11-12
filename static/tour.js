@@ -380,14 +380,15 @@ export function openTour(deps) {
             state.changed = true; // the backup panel's "last export" line must refresh
             msg.textContent = out.outcome === 'cancelled' ? 'Nothing was saved.' : `Saved ${out.filename}. Keep it in Files, Drive, or send it to yourself on WhatsApp or email.`;
           } catch (e) { msg.className = 'msg err'; msg.textContent = `Could not export: ${e.message}`; }
-        } }, 'Export a backup file now')
+        } }, 'Export everything now')
         : null;
       return [
-        el('p', {}, 'Everything lives in this browser only, so a backup file is the safety net. It holds the children, words, recordings and stars.'),
+        el('p', {}, 'Everything lives in this browser only, so a backup file is the safety net.'),
+        el('p', {}, 'On the Grown-ups page, "Back up" lets you choose who and what goes in the file:'),
         el('ul', { class: 'tour-points' },
-          el('li', {}, 'Export: makes one .spellings file. On a phone you can save it to Files or send it to yourself.'),
-          el('li', {}, 'Move to another phone or tablet: open Spellaloud there, Grown-ups > Back up > choose the file > Import.'),
-          el('li', {}, 'The app reminds you every few weeks to export again.')),
+          el('li', {}, '"Everything, for me": words, recordings, scores, settings and names. Keep it safe (Files, Drive, or send it to yourself), or import it on a new phone or tablet.'),
+          el('li', {}, '"To share with another parent": the words only, with no recordings of your child\'s voice, no scores and no names. Send the file; they import it and choose which of their children gets the words.'),
+          el('li', {}, 'The app reminds you every few weeks to make a full backup.')),
         el('div', { class: 'screenbox' }, exportBtn), msg,
         el('h3', {}, 'Put Spellaloud on your home screen'),
         el('p', {}, INSTALL_STEPS[platform]),
