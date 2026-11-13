@@ -417,7 +417,7 @@ function tourDeps(t) {
   btn.hidden = false;
   btn.onclick = () => openTour(tourDeps(t));
   await firstRender;
-  if (rendered && shouldAutoStart({ mode: t.mode, kids: kidList, seen: tourSeen(), search: location.search })) {
+  if (rendered && shouldAutoStart({ mode: t.mode, kids: kidList, seen: tourSeen(), search: location.search }) && location.hash !== '#import') {
     if (new URLSearchParams(location.search).has('tour')) history.replaceState(null, '', location.pathname + location.hash); // a reload does not reopen it
     openTour(tourDeps(t));
   }
@@ -454,8 +454,8 @@ async function paintVoiceBox() {
   let v = null;
   try { v = pickVoice(await loadVoices(globalThis.speechSynthesis)); } catch { /* none */ }
   document.getElementById('vnote').textContent = v
-    ? `This device has a British voice (${v.name}). It is used only if you choose "British voice"; otherwise each child's own recording is played.`
-    : 'This device has no British voice, so recordings are always used. Words without a recording must be recorded.';
+    ? `This device reads the words in a British voice (${v.name}). Choose "Own recordings" to play recordings first.`
+    : 'No British voice on this device yet, so recordings are used and every word must be recorded. Recommended: install one.';
   if (!v) document.getElementById('vnote').append(' ', voiceHelpLink(), '.');
   await paintKidVoices();
 }
@@ -830,12 +830,15 @@ function importSection(store, kids, msg) {
       await paintBackupBox('Imported. ' + preview.text.split('\n').pop());
     } catch (e) { msg.textContent = e.message; }
   } }, 'Import');
-  return h('div', { class: 'importbox' },
+  return h('div', { class: 'importbox', id: 'import' },
     h('h3', {}, 'Import a file'),
     h('p', { class: 'note' }, 'A backup you made, or words another parent sent you.'),
     file, info, target, modeSel, importBtn);
 }
-paintBackupBox().catch(() => { /* backup panel is optional; the rest of the page still works */ });
+paintBackupBox().then(() => {
+  // /parent#import (from the kid screen's "Import a backup file"): the panel is painted late, so scroll by hand.
+  if (location.hash === '#import') document.getElementById('import')?.scrollIntoView({ block: 'start' });
+}).catch(() => { /* backup panel is optional; the rest of the page still works */ });
 
 // Feedback (class trial, 2026-11): near the top so a parent finds it in seconds. feedback.js does the form + POST.
 const feedbackBox = document.getElementById('feedbackbox');
@@ -856,7 +859,7 @@ const tipBox = document.getElementById('tipbox');
 if (tipBox) {
   tipBox.replaceChildren(
     h('h2', {}, 'Say thanks'),
-    h('p', { class: 'note' }, 'Spellings is free and made by one parent. If it helps, you can buy me a coffee. Optional; nothing unlocks and nothing changes.'),
+    h('p', { class: 'note' }, 'Spellaloud is free and made by one parent. If it helps, you can buy me a coffee. Optional; nothing unlocks and nothing changes.'),
     h('p', {}, h('a', { class: 'btn small', href: TIP_URL, target: '_blank', rel: 'noopener noreferrer' }, '☕ Buy me a coffee')));
   tipBox.hidden = false;
 }

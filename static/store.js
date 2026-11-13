@@ -527,6 +527,7 @@ export async function createStore(backend, { clock = () => new Date(), tz = 'Eur
         const bytes = word.audio_at != null ? await backend.getAudio(word.id) : null;
         if (bytes) { name = `audio/${word.id}.wav`; audio[name] = new Uint8Array(bytes); }
         const rec = { label: word.label, position: word.position, audio: name };
+        if (name && word.audio_source === 'tts') rec.audio_source = 'tts'; // read-aloud clip, not the child's voice (absent = child)
         // "I know it" marker: portable as the timestamp of the session it was cleared at (ids are re-issued on import).
         const clearedAt = state.sessions.find((x) => x.id === word.cleared_session);
         if (clearedAt) rec.cleared_at = clearedAt.created_at;
@@ -562,7 +563,7 @@ export async function createStore(backend, { clock = () => new Date(), tz = 'Eur
       for (const word of w.words) {
         const rec = { id: ++next.seq.word, week_id: week.id, position: word.position, label: word.label, audio_at: null, audio_source: null, cleared_session: null };
         rec.cleared_at = word.cleared_at || null;
-        if (word.audio && audio[word.audio]) { rec.audio_at = nowStr(); rec.audio_source = 'child'; bytesById[rec.id] = audio[word.audio]; }
+        if (word.audio && audio[word.audio]) { rec.audio_at = nowStr(); rec.audio_source = word.audio_source === 'tts' ? 'tts' : 'child'; bytesById[rec.id] = audio[word.audio]; }
         next.words.push(rec);
         idOf.set(`${w.kid}|${w.week_start}|${word.label.trim().toLowerCase()}`, rec.id);
       }

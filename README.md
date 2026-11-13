@@ -51,6 +51,7 @@ own hostname: run `SPELLING_DATA_DIR=./data python3 server.py` and open http://l
 | `server.py` | stdlib HTTP server: the family API (SQLite) or, in public mode, the static app + the feedback endpoint |
 | `static/` | the app: `app.js` child screens, `parent.js` grown-ups page, `tour.js` guided tour, `store.js` IndexedDB store, `voice.js` speech and recording, `share.js` share links, `pack.js` export files |
 | `bin/` | build, smoke and helper scripts (each has a usage header) |
+| `tools/export_family.py` | home-server data → one `.spellings` file for the browser app (`docs/migrate-family.md`) |
 | `content/uk-statutory/` | statutory spelling lists as data (OGL v3.0) |
 | `site/` | help, privacy, terms and changelog pages |
 | `tests/` | `unittest` and `node:test` suites |
